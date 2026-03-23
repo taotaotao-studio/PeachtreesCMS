@@ -1,0 +1,213 @@
+<?php
+/**
+ * PeachtreesCMS API - 导出文章数据为 WordPress WXR 风格 XML
+ * GET /api/data/export.php
+ * 需要管理员权限
+ */
+
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../response.php';
+require_once __DIR__ . '/../auth.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    error('Method not allowed', 405);
+}
+
+requireAdmin();
+
+function xmlText(DOMDocument $dom, DOMElement $parent, string $name, string $value): DOMElement {
+    $child = $dom->createElement($name);
+    $child->appendChild($dom->createTextNode($value));
+    $parent->appendChild($child);
+    return $child;
+}
+
+function xmlCdata(DOMDocument $dom, DOMElement $parent, string $name, ?string $value): DOMElement {
+    $child = $dom->createElement($name);
+    $child->appendChild($dom->createCDATASection($value ?? ''));
+    $parent->appendChild($child);
+    return $child;
+}
+
+function toRfc2822(?string $datetime): string {
+    if (empty($datetime)) {
+        return gmdate(DATE_RSS);
+    }
+    $ts = strtotime($datetime);
+    return $ts === false ? gmdate(DATE_RSS) : gmdate(DATE_RSS, $ts);
+}
+
+function rewriteMediaUrls(?string $content): string {
+    $content = $content ?? '';
+    return preg_replace(
+        '#https?://localhost/wordpress/wp-content/uploads/([0-9]{4}/[0-9]{2}/[^"\']+)#i',
+        '/upload/media/$1',
+        $content
+    );
+}
+
+try {
+    $pdo = getDB();
+
+    $optionsStmt = $pdo->query("SELECT option_key, option_value FROM options");
+    $options = [];
+    foreach ($optionsStmt->fetchAll() as $row) {
+        $options[$row['option_key']] = $row['option_value'];
+    }
+
+    $tags = $pdo->query("SELECT id, tag, display_name FROM tags ORDER BY id ASC")->fetchAll();
+
+    $postsStmt = $pdo->query("
+        SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
+               t.display_name
+        FROM posts p
+        LEFT JOIN tags t ON t.tag = p.tag
+        ORDER BY p.created_at ASC, p.id ASC
+    ");
+    $posts = $postsStmt->fetchAll();
+
+    $commentsStmt = $pdo->query("
+        SELECT c.id, c.post_id, c.user_id, c.content, c.status, c.parent_id, c.ip, c.created_at, c.updated_at,
+               cu.email, cu.nickname, cu.website
+        FROM comments c
+        LEFT JOIN comment_users cu ON cu.id = c.user_id
+        ORDER BY c.created_at ASC, c.id ASC
+    ");
+    $commentsByPost = [];
+    foreach ($commentsStmt->fetchAll() as $comment) {
+        $commentsByPost[(int) $comment['post_id']][] = $comment;
+    }
+
+    $siteTitle = $options['site_title'] ?? 'PeachtreesCMS';
+    $siteUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $language = ($options['default_lang'] ?? 'zh-CN') === 'zh-CN' ? 'zh-Hans' : 'en-US';
+    $createdAt = gmdate('Y-m-d H:i');
+    $filename = 'peachtrees.WordPress.' . date('Y-m-d') . '.xml';
+
+    $dom = new DOMDocument('1.0', 'UTF-8');
+    $dom->formatOutput = true;
+
+    $rss = $dom->createElement('rss');
+    $rss->setAttribute('version', '2.0');
+    $rss->setAttribute('xmlns:excerpt', 'http://wordpress.org/export/1.2/excerpt/');
+    $rss->setAttribute('xmlns:content', 'http://purl.org/rss/1.0/modules/content/');
+    $rss->setAttribute('xmlns:wfw', 'http://wellformedweb.org/CommentAPI/');
+    $rss->setAttribute('xmlns:dc', 'http://purl.org/dc/elements/1.1/');
+    $rss->setAttribute('xmlns:wp', 'http://wordpress.org/export/1.2/');
+    $dom->appendChild($rss);
+
+    $channel = $dom->createElement('channel');
+    $rss->appendChild($channel);
+
+    xmlText($dom, $channel, 'title', $siteTitle);
+    xmlText($dom, $channel, 'link', $siteUrl);
+    xmlText($dom, $channel, 'description', '');
+    xmlText($dom, $channel, 'pubDate', gmdate(DATE_RSS));
+    xmlText($dom, $channel, 'language', $language);
+    xmlText($dom, $channel, 'wp:wxr_version', '1.2');
+    xmlText($dom, $channel, 'wp:base_site_url', $siteUrl);
+    xmlText($dom, $channel, 'wp:base_blog_url', $siteUrl);
+    xmlText($dom, $channel, 'generator', 'https://wordpress.org/?v=6.9.4');
+    $channel->appendChild($dom->createComment(' generator="PeachtreesCMS" created="' . $createdAt . '" '));
+
+    $author = $dom->createElement('wp:author');
+    xmlText($dom, $author, 'wp:author_id', '1');
+    xmlCdata($dom, $author, 'wp:author_login', 'admin');
+    xmlCdata($dom, $author, 'wp:author_email', 'admin@example.com');
+    xmlCdata($dom, $author, 'wp:author_display_name', 'admin');
+    xmlCdata($dom, $author, 'wp:author_first_name', '');
+    xmlCdata($dom, $author, 'wp:author_last_name', '');
+    $channel->appendChild($author);
+
+    foreach ($tags as $tag) {
+        $term = $dom->createElement('wp:term');
+        xmlText($dom, $term, 'wp:term_id', (string) $tag['id']);
+        xmlCdata($dom, $term, 'wp:term_taxonomy', 'category');
+        xmlCdata($dom, $term, 'wp:term_slug', $tag['tag']);
+        xmlCdata($dom, $term, 'wp:term_parent', '');
+        xmlCdata($dom, $term, 'wp:term_name', $tag['display_name']);
+        $channel->appendChild($term);
+    }
+
+    foreach ($posts as $post) {
+        $item = $dom->createElement('item');
+        $channel->appendChild($item);
+
+        $postSlug = trim((string) ($post['slug'] ?? ''));
+        $postIdentifier = $postSlug !== '' ? $postSlug : (string) $post['id'];
+        $postLink = $siteUrl . '/#/post/' . rawurlencode($postIdentifier);
+        $status = (int) $post['active'] === 1 ? 'publish' : 'draft';
+
+        xmlCdata($dom, $item, 'title', $post['title']);
+        xmlText($dom, $item, 'link', $postLink);
+        xmlText($dom, $item, 'pubDate', toRfc2822($post['created_at']));
+        xmlCdata($dom, $item, 'dc:creator', 'admin');
+        $guid = $dom->createElement('guid', $siteUrl . '/?p=' . $post['id']);
+        $guid->setAttribute('isPermaLink', 'false');
+        $item->appendChild($guid);
+        xmlText($dom, $item, 'description', '');
+        xmlCdata($dom, $item, 'content:encoded', rewriteMediaUrls($post['content'] ?? ''));
+        xmlCdata($dom, $item, 'excerpt:encoded', $post['summary'] ?? '');
+        xmlText($dom, $item, 'wp:post_id', (string) $post['id']);
+        xmlCdata($dom, $item, 'wp:post_date', $post['created_at'] ?? date('Y-m-d H:i:s'));
+        xmlCdata($dom, $item, 'wp:post_date_gmt', gmdate('Y-m-d H:i:s', strtotime($post['created_at'] ?? 'now')));
+        xmlCdata($dom, $item, 'wp:post_modified', $post['updated_at'] ?? ($post['created_at'] ?? date('Y-m-d H:i:s')));
+        xmlCdata($dom, $item, 'wp:post_modified_gmt', gmdate('Y-m-d H:i:s', strtotime($post['updated_at'] ?? ($post['created_at'] ?? 'now'))));
+        xmlCdata($dom, $item, 'wp:comment_status', (int) $post['allow_comments'] === 1 ? 'open' : 'closed');
+        xmlCdata($dom, $item, 'wp:ping_status', 'open');
+        xmlCdata($dom, $item, 'wp:post_name', $postSlug);
+        xmlCdata($dom, $item, 'wp:status', $status);
+        xmlText($dom, $item, 'wp:post_parent', '0');
+        xmlText($dom, $item, 'wp:menu_order', '0');
+        xmlCdata($dom, $item, 'wp:post_type', 'post');
+        xmlCdata($dom, $item, 'wp:post_password', '');
+        xmlText($dom, $item, 'wp:is_sticky', '0');
+
+        if (!empty($post['tag'])) {
+            $category = $dom->createElement('category');
+            $category->setAttribute('domain', 'category');
+            $category->setAttribute('nicename', $post['tag']);
+            $category->appendChild($dom->createCDATASection($post['display_name'] ?: $post['tag']));
+            $item->appendChild($category);
+        }
+
+        $postMeta = [
+            '_peachtrees_post_type' => $post['post_type'] ?? 'normal',
+            '_peachtrees_allow_comments' => (string) ((int) ($post['allow_comments'] ?? 1)),
+            '_peachtrees_active' => (string) ((int) ($post['active'] ?? 1)),
+            '_peachtrees_cover_media' => $post['cover_media'] ?? '[]',
+        ];
+
+        foreach ($postMeta as $metaKey => $metaValue) {
+            $meta = $dom->createElement('wp:postmeta');
+            xmlCdata($dom, $meta, 'wp:meta_key', $metaKey);
+            xmlCdata($dom, $meta, 'wp:meta_value', $metaValue);
+            $item->appendChild($meta);
+        }
+
+        foreach ($commentsByPost[(int) $post['id']] ?? [] as $comment) {
+            $commentNode = $dom->createElement('wp:comment');
+            xmlText($dom, $commentNode, 'wp:comment_id', (string) $comment['id']);
+            xmlCdata($dom, $commentNode, 'wp:comment_author', $comment['nickname'] ?: 'Anonymous');
+            xmlCdata($dom, $commentNode, 'wp:comment_author_email', $comment['email'] ?: '');
+            xmlText($dom, $commentNode, 'wp:comment_author_url', $comment['website'] ?: '');
+            xmlCdata($dom, $commentNode, 'wp:comment_author_IP', $comment['ip'] ?: '');
+            xmlCdata($dom, $commentNode, 'wp:comment_date', $comment['created_at'] ?? date('Y-m-d H:i:s'));
+            xmlCdata($dom, $commentNode, 'wp:comment_date_gmt', gmdate('Y-m-d H:i:s', strtotime($comment['created_at'] ?? 'now')));
+            xmlCdata($dom, $commentNode, 'wp:comment_content', $comment['content'] ?? '');
+            xmlCdata($dom, $commentNode, 'wp:comment_approved', (string) ((int) ($comment['status'] ?? 0)));
+            xmlCdata($dom, $commentNode, 'wp:comment_type', 'comment');
+            xmlText($dom, $commentNode, 'wp:comment_parent', (string) ((int) ($comment['parent_id'] ?? 0)));
+            xmlText($dom, $commentNode, 'wp:comment_user_id', '0');
+            $item->appendChild($commentNode);
+        }
+    }
+
+    header('Content-Type: application/rss+xml; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    echo $dom->saveXML();
+    exit;
+} catch (PDOException $e) {
+    serverError('导出文章数据失败: ' . $e->getMessage());
+}

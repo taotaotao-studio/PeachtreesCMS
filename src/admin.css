@@ -1,0 +1,74 @@
+/* Admin-only styles */
+.tiptap-editor .tiptap-editor-content {
+  min-height: 320px;
+  padding: 1rem;
+  outline: none;
+}
+
+.tiptap-editor .tiptap-editor-content p {
+  margin: 0 0 0.75rem;
+}
+
+.tiptap-editor .tiptap-editor-content ul,
+.tiptap-editor .tiptap-editor-content ol {
+  padding-left: 1.5rem;
+}
+
+.tiptap-editor .tiptap-editor-content pre {
+  background: #1f2937;
+  color: #f8fafc;
+  border-radius: 8px;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.tiptap-editor .tiptap-editor-content blockquote {
+  border-left: 4px solid #2E8B57;
+  margin: 0;
+  padding-left: 0.75rem;
+}
+
+.tiptap-editor .tiptap-editor-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.75rem 0;
+}
+
+.tiptap-editor .tiptap-editor-content th,
+.tiptap-editor .tiptap-editor-content td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+.tiptap-editor .tiptap-editor-content th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Simple editor for settings */
+.tiptap-simple-editor .tiptap-simple-content {
+  min-height: 120px;
+  padding: 0.75rem;
+  outline: none;
+}
+
+.tiptap-simple-editor .tiptap-simple-content p {
+  margin: 0 0 0.5rem;
+}
+
+.tiptap-simple-editor .tiptap-simple-content a {
+  color: #0d6efd;
+  text-decoration: underline;
+}
+
+/* Theme cards (admin) */
+.theme-card-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+  background: #f1f3f5;
+}
