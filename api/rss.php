@@ -15,8 +15,8 @@ try {
     
     // 获取最新 30 篇已发布文章
     $sql = "SELECT p.id, p.title, p.content, p.created_at, t.display_name
-            FROM posts p
-            LEFT JOIN tags t ON p.tag = t.tag
+            FROM pt_posts p
+            LEFT JOIN pt_tags t ON p.tag = t.tag
             WHERE p.active = 1
             ORDER BY p.created_at DESC
             LIMIT 30";

@@ -35,7 +35,7 @@ try {
     $pdo = getDB();
     
     // 检查文章是否存在并获取标签
-    $checkStmt = $pdo->prepare("SELECT id, tag FROM posts WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, tag FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $post = $checkStmt->fetch();
     
@@ -46,12 +46,12 @@ try {
     $tag = $post['tag'];
     
     // 删除文章
-    $deleteStmt = $pdo->prepare("DELETE FROM posts WHERE id = ?");
+    $deleteStmt = $pdo->prepare("DELETE FROM pt_posts WHERE id = ?");
     $deleteStmt->execute([$id]);
     
     // 更新标签计数
     if ($tag) {
-        $updateCountStmt = $pdo->prepare("UPDATE tags SET post_count = (SELECT COUNT(*) FROM posts WHERE tag = ?) WHERE tag = ?");
+        $updateCountStmt = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
         $updateCountStmt->execute([$tag, $tag]);
     }
     

@@ -17,7 +17,7 @@ try {
     $pdo = getDB();
     scanThemePackages($pdo);
 
-    $stmt = $pdo->query("SELECT id, slug, name, description, version, author, entry_css, user_layout_config, updated_at FROM themes WHERE is_active = 1 LIMIT 1");
+    $stmt = $pdo->query("SELECT id, slug, name, description, version, author, entry_css, user_layout_config, updated_at FROM pt_themes WHERE is_active = 1 LIMIT 1");
     $theme = $stmt ? $stmt->fetch() : null;
 
     if (!$theme) {

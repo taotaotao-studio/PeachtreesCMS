@@ -41,7 +41,7 @@ if (!empty($slug)) {
         error('URL标识只能包含字母、数字、连字符和下划线');
     }
     // 检查slug是否已存在
-    $slugCheckStmt = $pdo->prepare("SELECT id FROM posts WHERE slug = ?");
+    $slugCheckStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE slug = ?");
     $slugCheckStmt->execute([$slug]);
     if ($slugCheckStmt->fetch()) {
         error('URL标识已存在');
@@ -72,14 +72,14 @@ try {
     $pdo = getDB();
     
     // 检查标签是否存在
-    $tagStmt = $pdo->prepare("SELECT tag FROM tags WHERE tag = ?");
+    $tagStmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");
     $tagStmt->execute([$tag]);
     if (!$tagStmt->fetch()) {
         error('所选分类不存在');
     }
     
     // 插入文章
-    $sql = "INSERT INTO posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
+    $sql = "INSERT INTO pt_posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $tag,
@@ -95,7 +95,7 @@ try {
     $postId = $pdo->lastInsertId();
     
     // 更新标签计数
-    $updateCountStmt = $pdo->prepare("UPDATE tags SET post_count = (SELECT COUNT(*) FROM posts WHERE tag = ?) WHERE tag = ?");
+    $updateCountStmt = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
     $updateCountStmt->execute([$tag, $tag]);
     
     success([

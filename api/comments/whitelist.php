@@ -44,8 +44,8 @@ try {
     $whereClause = empty($conditions) ? '1=1' : implode(' AND ', $conditions);
 
     $countSql = "SELECT COUNT(*) AS total
-                 FROM commenter_whitelist cw
-                 INNER JOIN comment_users cu ON cu.id = cw.comment_user_id
+                 FROM pt_commenter_whitelist cw
+                 INNER JOIN pt_comment_users cu ON cu.id = cw.comment_user_id
                  WHERE {$whereClause}";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
@@ -65,8 +65,8 @@ try {
                 cu.email,
                 cu.nickname,
                 cu.website
-            FROM commenter_whitelist cw
-            INNER JOIN comment_users cu ON cu.id = cw.comment_user_id
+            FROM pt_commenter_whitelist cw
+            INNER JOIN pt_comment_users cu ON cu.id = cw.comment_user_id
             WHERE {$whereClause}
             ORDER BY cw.updated_at DESC, cw.id DESC
             LIMIT ? OFFSET ?";

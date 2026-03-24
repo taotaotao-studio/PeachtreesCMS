@@ -61,7 +61,7 @@ try {
     $pdo = getDB();
     
     // 检查文章是否存在且允许评论
-    $postStmt = $pdo->prepare("SELECT id, allow_comments FROM posts WHERE id = ?");
+    $postStmt = $pdo->prepare("SELECT id, allow_comments FROM pt_posts WHERE id = ?");
     $postStmt->execute([$postId]);
     $post = $postStmt->fetch();
     
@@ -75,7 +75,7 @@ try {
     
     // 如果有父评论，验证父评论是否存在
     if ($parentId > 0) {
-        $parentStmt = $pdo->prepare("SELECT id FROM comments WHERE id = ? AND post_id = ?");
+        $parentStmt = $pdo->prepare("SELECT id FROM pt_comments WHERE id = ? AND post_id = ?");
         $parentStmt->execute([$parentId, $postId]);
         if (!$parentStmt->fetch()) {
             error('父评论不存在');
@@ -83,18 +83,18 @@ try {
     }
     
     // 查找或创建评论用户
-    $userStmt = $pdo->prepare("SELECT id FROM comment_users WHERE email = ?");
+    $userStmt = $pdo->prepare("SELECT id FROM pt_comment_users WHERE email = ?");
     $userStmt->execute([$email]);
     $user = $userStmt->fetch();
     
     if ($user) {
         $userId = $user['id'];
         // 更新用户信息
-        $updateUserStmt = $pdo->prepare("UPDATE comment_users SET nickname = ?, website = ? WHERE id = ?");
+        $updateUserStmt = $pdo->prepare("UPDATE pt_comment_users SET nickname = ?, website = ? WHERE id = ?");
         $updateUserStmt->execute([$nickname, $website, $userId]);
     } else {
         // 创建新用户
-        $insertUserStmt = $pdo->prepare("INSERT INTO comment_users (email, nickname, website, created_at) VALUES (?, ?, ?, NOW())");
+        $insertUserStmt = $pdo->prepare("INSERT INTO pt_comment_users (email, nickname, website, created_at) VALUES (?, ?, ?, NOW())");
         $insertUserStmt->execute([$email, $nickname, $website]);
         $userId = $pdo->lastInsertId();
     }
@@ -106,7 +106,7 @@ try {
     try {
         $whitelistStmt = $pdo->prepare("
             SELECT status
-            FROM commenter_whitelist
+            FROM pt_commenter_whitelist
             WHERE comment_user_id = ?
               AND (expires_at IS NULL OR expires_at > NOW())
             LIMIT 1
@@ -131,7 +131,7 @@ try {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
     // 插入评论
-    $sql = "INSERT INTO comments (post_id, user_id, content, status, parent_id, ip, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
+    $sql = "INSERT INTO pt_comments (post_id, user_id, content, status, parent_id, ip, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$postId, $userId, $content, $commentStatus, $parentId > 0 ? $parentId : null, $ip]);
     

@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     $pdo = getDB();
-    $stmt = $pdo->query("SELECT option_key, option_value FROM options");
+    $stmt = $pdo->query("SELECT option_key, option_value FROM pt_options");
     $rows = $stmt->fetchAll();
     
     $options = [];

@@ -41,7 +41,7 @@ try {
     $whereClause = !empty($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
 
     // 获取总数
-    $countSql = "SELECT COUNT(*) FROM posts p $whereClause";
+    $countSql = "SELECT COUNT(*) FROM pt_posts p $whereClause";
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $total = $countStmt->fetchColumn();
@@ -49,8 +49,8 @@ try {
     // 获取文章列表
     $listSql = "SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
                 t.display_name
-                FROM posts p
-                LEFT JOIN tags t ON p.tag = t.tag
+                FROM pt_posts p
+                LEFT JOIN pt_tags t ON p.tag = t.tag
                 $whereClause
                 ORDER BY p.created_at DESC
                 LIMIT ? OFFSET ?";

@@ -43,7 +43,7 @@ try {
     $pdo = getDB();
     
     // 检查评论是否存在
-    $checkStmt = $pdo->prepare("SELECT id, status, user_id FROM comments WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, status, user_id FROM pt_comments WHERE id = ?");
     $checkStmt->execute([$id]);
     $comment = $checkStmt->fetch();
     
@@ -52,7 +52,7 @@ try {
     }
     
     // 更新评论状态
-    $sql = "UPDATE comments SET status = ?, updated_at = NOW() WHERE id = ?";
+    $sql = "UPDATE pt_comments SET status = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$status, $id]);
 
@@ -62,19 +62,19 @@ try {
     try {
         $userId = intval($comment['user_id'] ?? 0);
         if ($userId > 0 && in_array($status, [1, 2], true)) {
-            $wlStmt = $pdo->prepare("SELECT status FROM commenter_whitelist WHERE comment_user_id = ? LIMIT 1");
+            $wlStmt = $pdo->prepare("SELECT status FROM pt_commenter_whitelist WHERE comment_user_id = ? LIMIT 1");
             $wlStmt->execute([$userId]);
             $wl = $wlStmt->fetch();
             $currentWlStatus = $wl['status'] ?? null;
 
             if ($status === 1 && $currentWlStatus !== 'blocked') {
-                $approvedCountStmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM comments WHERE user_id = ? AND status = 1");
+                $approvedCountStmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM pt_comments WHERE user_id = ? AND status = 1");
                 $approvedCountStmt->execute([$userId]);
                 $approvedCount = intval($approvedCountStmt->fetch()['cnt'] ?? 0);
 
                 if ($approvedCount >= 3) {
                     $upsertTrustedStmt = $pdo->prepare("
-                        INSERT INTO commenter_whitelist (comment_user_id, status, reason, expires_at, created_by, created_at, updated_at)
+                        INSERT INTO pt_commenter_whitelist (comment_user_id, status, reason, expires_at, created_by, created_at, updated_at)
                         VALUES (?, 'trusted', ?, NULL, NULL, NOW(), NOW())
                         ON DUPLICATE KEY UPDATE
                             status = 'trusted',
@@ -87,13 +87,13 @@ try {
             }
 
             if ($status === 2 && $currentWlStatus !== 'trusted') {
-                $rejectedCountStmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM comments WHERE user_id = ? AND status = 2");
+                $rejectedCountStmt = $pdo->prepare("SELECT COUNT(*) AS cnt FROM pt_comments WHERE user_id = ? AND status = 2");
                 $rejectedCountStmt->execute([$userId]);
                 $rejectedCount = intval($rejectedCountStmt->fetch()['cnt'] ?? 0);
 
                 if ($rejectedCount >= 2) {
                     $upsertBlockedStmt = $pdo->prepare("
-                        INSERT INTO commenter_whitelist (comment_user_id, status, reason, expires_at, created_by, created_at, updated_at)
+                        INSERT INTO pt_commenter_whitelist (comment_user_id, status, reason, expires_at, created_by, created_at, updated_at)
                         VALUES (?, 'blocked', ?, NULL, NULL, NOW(), NOW())
                         ON DUPLICATE KEY UPDATE
                             status = 'blocked',

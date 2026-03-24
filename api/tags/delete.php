@@ -35,7 +35,7 @@ try {
     $pdo = getDB();
     
     // 检查标签是否存在
-    $checkStmt = $pdo->prepare("SELECT id, tag FROM tags WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, tag FROM pt_tags WHERE id = ?");
     $checkStmt->execute([$id]);
     $tag = $checkStmt->fetch();
     
@@ -44,7 +44,7 @@ try {
     }
     
     // 检查是否有文章使用此标签
-    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM posts WHERE tag = ?");
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM pt_posts WHERE tag = ?");
     $countStmt->execute([$tag['tag']]);
     $postCount = $countStmt->fetchColumn();
     
@@ -53,7 +53,7 @@ try {
     }
     
     // 删除标签
-    $deleteStmt = $pdo->prepare("DELETE FROM tags WHERE id = ?");
+    $deleteStmt = $pdo->prepare("DELETE FROM pt_tags WHERE id = ?");
     $deleteStmt->execute([$id]);
     
     success(null, '标签删除成功');

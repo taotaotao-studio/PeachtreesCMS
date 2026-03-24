@@ -30,16 +30,16 @@ try {
     if ($isNumericId) {
         $sql = "SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
                 t.display_name
-                FROM posts p
-                LEFT JOIN tags t ON p.tag = t.tag
+                FROM pt_posts p
+                LEFT JOIN pt_tags t ON p.tag = t.tag
                 WHERE p.id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([intval($identifier)]);
     } else {
         $sql = "SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
                 t.display_name
-                FROM posts p
-                LEFT JOIN tags t ON p.tag = t.tag
+                FROM pt_posts p
+                LEFT JOIN pt_tags t ON p.tag = t.tag
                 WHERE p.slug = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$identifier]);
@@ -59,13 +59,13 @@ try {
     $post['cover_media'] = is_array($coverMedia) ? $coverMedia : [];
 
     // 获取上一篇文章（ID更小的最近一篇，且已发布）
-    $prevSql = "SELECT id, title, slug FROM posts WHERE id < ? AND active = 1 ORDER BY id DESC LIMIT 1";
+    $prevSql = "SELECT id, title, slug FROM pt_posts WHERE id < ? AND active = 1 ORDER BY id DESC LIMIT 1";
     $prevStmt = $pdo->prepare($prevSql);
     $prevStmt->execute([$post['id']]);
     $post['prev_post'] = $prevStmt->fetch();
 
     // 获取下一篇文章（ID更大的最近一篇，且已发布）
-    $nextSql = "SELECT id, title, slug FROM posts WHERE id > ? AND active = 1 ORDER BY id ASC LIMIT 1";
+    $nextSql = "SELECT id, title, slug FROM pt_posts WHERE id > ? AND active = 1 ORDER BY id ASC LIMIT 1";
     $nextStmt = $pdo->prepare($nextSql);
     $nextStmt->execute([$post['id']]);
     $post['next_post'] = $nextStmt->fetch();

@@ -46,7 +46,7 @@ try {
     $pdo = getDB();
     
     // 获取当前用户的密码
-    $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT password_hash FROM pt_users WHERE id = ?");
     $stmt->execute([$user['id']]);
     $currentUser = $stmt->fetch();
     
@@ -63,7 +63,7 @@ try {
     $hashedPassword = hashPassword($newPassword);
     
     // 更新密码
-    $updateStmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+    $updateStmt = $pdo->prepare("UPDATE pt_users SET password_hash = ? WHERE id = ?");
     $updateStmt->execute([$hashedPassword, $user['id']]);
     
     success(null, '密码修改成功');

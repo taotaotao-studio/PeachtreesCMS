@@ -28,7 +28,7 @@ try {
     $pdo = getDB();
     scanThemePackages($pdo);
 
-    $checkStmt = $pdo->prepare("SELECT id FROM themes WHERE slug = ? LIMIT 1");
+    $checkStmt = $pdo->prepare("SELECT id FROM pt_themes WHERE slug = ? LIMIT 1");
     $checkStmt->execute([$slug]);
     $theme = $checkStmt->fetch();
     if (!$theme) {
@@ -36,7 +36,7 @@ try {
     }
 
     $targetId = intval($theme['id']);
-    $updateStmt = $pdo->prepare("UPDATE themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+    $updateStmt = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
     $updateStmt->execute([$targetId]);
 
     success([

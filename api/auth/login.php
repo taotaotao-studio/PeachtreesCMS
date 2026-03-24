@@ -28,7 +28,7 @@ try {
     $pdo = getDB();
     
     // 查询用户
-    $stmt = $pdo->prepare("SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?");
+    $stmt = $pdo->prepare("SELECT id, username, email, password_hash FROM pt_users WHERE username = ? OR email = ?");
     $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
     
@@ -46,7 +46,7 @@ try {
     $_SESSION['user'] = $user['username'];
     
     // 更新登录时间
-    $updateStmt = $pdo->prepare("UPDATE users SET last_login_at = NOW() WHERE id = ?");
+    $updateStmt = $pdo->prepare("UPDATE pt_users SET last_login_at = NOW() WHERE id = ?");
     $updateStmt->execute([$user['id']]);
     
     // 返回成功

@@ -7,10 +7,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
+      '/pt_api': {
         target: 'http://localhost',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/PeachtreesCMS/api')
+        rewrite: (path) => path.replace(/^\/pt_api/, '/PeachtreesCMS/api')
       },
       '/upload': {
         target: 'http://localhost',

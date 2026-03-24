@@ -50,14 +50,14 @@ try {
     $pdo = getDB();
     
     // 检查用户名是否已存在
-    $checkUserStmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+    $checkUserStmt = $pdo->prepare("SELECT id FROM pt_users WHERE username = ?");
     $checkUserStmt->execute([$username]);
     if ($checkUserStmt->fetch()) {
         error('用户名已存在');
     }
     
     // 检查邮箱是否已存在
-    $checkEmailStmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+    $checkEmailStmt = $pdo->prepare("SELECT id FROM pt_users WHERE email = ?");
     $checkEmailStmt->execute([$email]);
     if ($checkEmailStmt->fetch()) {
         error('邮箱已被使用');
@@ -67,7 +67,7 @@ try {
     $hashedPassword = hashPassword($password);
     
     // 插入用户
-    $sql = "INSERT INTO users (username, email, password_hash, created_at, last_login_at) VALUES (?, ?, ?, NOW(), NOW())";
+    $sql = "INSERT INTO pt_users (username, email, password_hash, created_at, last_login_at) VALUES (?, ?, ?, NOW(), NOW())";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$username, $email, $hashedPassword]);
     

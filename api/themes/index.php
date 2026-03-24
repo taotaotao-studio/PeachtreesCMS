@@ -21,7 +21,7 @@ try {
     $pdo = getDB();
     scanThemePackages($pdo);
 
-    $stmt = $pdo->query("SELECT id, slug, name, description, version, author, entry_css, thumbnail, is_active, user_layout_config, updated_at, last_scanned_at FROM themes ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, slug, name, description, version, author, entry_css, thumbnail, is_active, user_layout_config, updated_at, last_scanned_at FROM pt_themes ORDER BY id ASC");
     $themes = $stmt ? $stmt->fetchAll() : [];
 
     foreach ($themes as &$theme) {

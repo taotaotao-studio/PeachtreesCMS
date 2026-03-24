@@ -45,7 +45,7 @@ if ($expiresAt !== '') {
 try {
     $pdo = getDB();
 
-    $userStmt = $pdo->prepare("SELECT id FROM comment_users WHERE email = ?");
+    $userStmt = $pdo->prepare("SELECT id FROM pt_comment_users WHERE email = ?");
     $userStmt->execute([$email]);
     $commentUser = $userStmt->fetch();
     if (!$commentUser) {
@@ -54,7 +54,7 @@ try {
     $commentUserId = intval($commentUser['id']);
 
     if ($status === 'none') {
-        $deleteStmt = $pdo->prepare("DELETE FROM commenter_whitelist WHERE comment_user_id = ?");
+        $deleteStmt = $pdo->prepare("DELETE FROM pt_commenter_whitelist WHERE comment_user_id = ?");
         $deleteStmt->execute([$commentUserId]);
         success([
             'email' => $email,
@@ -63,7 +63,7 @@ try {
     }
 
     $upsertSql = "
-        INSERT INTO commenter_whitelist
+        INSERT INTO pt_commenter_whitelist
             (comment_user_id, status, reason, expires_at, created_by, created_at, updated_at)
         VALUES
             (?, ?, ?, ?, ?, NOW(), NOW())

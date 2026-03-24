@@ -19,12 +19,7 @@ Thumbs.db
 npm-debug.log*
 
 # Upload files (optional, uncomment if needed)
-# upload/*
+upload/*
 
-# ai rules
-.iflowrules
-.lingma
-
-# API Environment variables
-api/.env
-api/.env.local
+# plan
+.plan

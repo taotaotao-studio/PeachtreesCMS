@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $pdo = getDB();
     
-    $sql = "SELECT id, tag, display_name, post_count FROM tags ORDER BY id ASC";
+    $sql = "SELECT id, tag, display_name, post_count FROM pt_tags ORDER BY id ASC";
     $stmt = $pdo->query($sql);
     $tags = $stmt->fetchAll();
     

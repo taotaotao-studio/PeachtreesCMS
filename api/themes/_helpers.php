@@ -203,7 +203,7 @@ function scanThemePackages(PDO $pdo): void {
         }
 
         $upsert = $pdo->prepare("
-            INSERT INTO themes (slug, name, description, version, author, entry_css, thumbnail, is_active, created_at, updated_at, last_scanned_at)
+            INSERT INTO pt_themes (slug, name, description, version, author, entry_css, thumbnail, is_active, created_at, updated_at, last_scanned_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW(), NOW())
             ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
@@ -227,26 +227,26 @@ function scanThemePackages(PDO $pdo): void {
     }
 
     // 确保始终有且仅有一个激活主题
-    $activeStmt = $pdo->query("SELECT id, slug FROM themes WHERE is_active = 1 ORDER BY id ASC");
+    $activeStmt = $pdo->query("SELECT id, slug FROM pt_themes WHERE is_active = 1 ORDER BY id ASC");
     $activeRows = $activeStmt ? $activeStmt->fetchAll() : [];
 
     if (count($activeRows) === 0) {
-        $fallbackStmt = $pdo->prepare("SELECT id FROM themes WHERE slug = ? LIMIT 1");
+        $fallbackStmt = $pdo->prepare("SELECT id FROM pt_themes WHERE slug = ? LIMIT 1");
         $fallbackStmt->execute(['default']);
         $fallback = $fallbackStmt->fetch();
 
         if (!$fallback) {
-            $fallbackStmt = $pdo->query("SELECT id FROM themes ORDER BY id ASC LIMIT 1");
+            $fallbackStmt = $pdo->query("SELECT id FROM pt_themes ORDER BY id ASC LIMIT 1");
             $fallback = $fallbackStmt ? $fallbackStmt->fetch() : null;
         }
 
         if ($fallback) {
-            $setActive = $pdo->prepare("UPDATE themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+            $setActive = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
             $setActive->execute([intval($fallback['id'])]);
         }
     } elseif (count($activeRows) > 1) {
         $keepId = intval($activeRows[0]['id']);
-        $setOnlyOne = $pdo->prepare("UPDATE themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+        $setOnlyOne = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
         $setOnlyOne->execute([$keepId]);
     }
 }

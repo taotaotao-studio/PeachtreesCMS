@@ -50,19 +50,19 @@ function rewriteMediaUrls(?string $content): string {
 try {
     $pdo = getDB();
 
-    $optionsStmt = $pdo->query("SELECT option_key, option_value FROM options");
+    $optionsStmt = $pdo->query("SELECT option_key, option_value FROM pt_options");
     $options = [];
     foreach ($optionsStmt->fetchAll() as $row) {
         $options[$row['option_key']] = $row['option_value'];
     }
 
-    $tags = $pdo->query("SELECT id, tag, display_name FROM tags ORDER BY id ASC")->fetchAll();
+    $tags = $pdo->query("SELECT id, tag, display_name FROM pt_tags ORDER BY id ASC")->fetchAll();
 
     $postsStmt = $pdo->query("
         SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
                t.display_name
-        FROM posts p
-        LEFT JOIN tags t ON t.tag = p.tag
+        FROM pt_posts p
+        LEFT JOIN pt_tags t ON t.tag = p.tag
         ORDER BY p.created_at ASC, p.id ASC
     ");
     $posts = $postsStmt->fetchAll();
@@ -70,8 +70,8 @@ try {
     $commentsStmt = $pdo->query("
         SELECT c.id, c.post_id, c.user_id, c.content, c.status, c.parent_id, c.ip, c.created_at, c.updated_at,
                cu.email, cu.nickname, cu.website
-        FROM comments c
-        LEFT JOIN comment_users cu ON cu.id = c.user_id
+        FROM pt_comments c
+        LEFT JOIN pt_comment_users cu ON cu.id = c.user_id
         ORDER BY c.created_at ASC, c.id ASC
     ");
     $commentsByPost = [];

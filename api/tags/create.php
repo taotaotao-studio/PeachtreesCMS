@@ -41,14 +41,14 @@ try {
     $pdo = getDB();
     
     // 检查标签是否已存在
-    $checkStmt = $pdo->prepare("SELECT id FROM tags WHERE tag = ?");
+    $checkStmt = $pdo->prepare("SELECT id FROM pt_tags WHERE tag = ?");
     $checkStmt->execute([$tag]);
     if ($checkStmt->fetch()) {
         error('标签英文名已存在');
     }
     
     // 插入标签
-    $sql = "INSERT INTO tags (tag, display_name, post_count) VALUES (?, ?, 0)";
+    $sql = "INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$tag, $tagLocal]);
     

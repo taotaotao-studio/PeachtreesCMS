@@ -46,7 +46,7 @@ try {
     $pdo = getDB();
     
     // 检查标签是否存在
-    $checkStmt = $pdo->prepare("SELECT tag FROM tags WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE id = ?");
     $checkStmt->execute([$id]);
     $oldTag = $checkStmt->fetch();
     
@@ -55,7 +55,7 @@ try {
     }
     
     // 检查新英文名是否已被其他标签使用
-    $dupStmt = $pdo->prepare("SELECT id FROM tags WHERE tag = ? AND id != ?");
+    $dupStmt = $pdo->prepare("SELECT id FROM pt_tags WHERE tag = ? AND id != ?");
     $dupStmt->execute([$tag, $id]);
     if ($dupStmt->fetch()) {
         error('标签英文名已被使用');
@@ -68,12 +68,12 @@ try {
     
     try {
         // 更新标签
-        $updateStmt = $pdo->prepare("UPDATE tags SET tag = ?, display_name = ? WHERE id = ?");
+        $updateStmt = $pdo->prepare("UPDATE pt_tags SET tag = ?, display_name = ? WHERE id = ?");
         $updateStmt->execute([$tag, $tagLocal, $id]);
         
         // 如果英文名变更，更新文章表中的标签
         if ($oldTagName !== $tag) {
-            $updatePostsStmt = $pdo->prepare("UPDATE posts SET tag = ? WHERE tag = ?");
+            $updatePostsStmt = $pdo->prepare("UPDATE pt_posts SET tag = ? WHERE tag = ?");
             $updatePostsStmt->execute([$tag, $oldTagName]);
         }
         

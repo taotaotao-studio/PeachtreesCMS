@@ -77,7 +77,7 @@ try {
             error('URL标识只能包含字母、数字、连字符和下划线');
         }
         // 检查slug是否已被其他文章使用
-        $slugCheckStmt = $pdo->prepare("SELECT id FROM posts WHERE slug = ? AND id != ?");
+        $slugCheckStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE slug = ? AND id != ?");
         $slugCheckStmt->execute([$slug, $id]);
         if ($slugCheckStmt->fetch()) {
             error('URL标识已存在');
@@ -85,7 +85,7 @@ try {
     }
 
     // 检查文章是否存在
-    $checkStmt = $pdo->prepare("SELECT id, tag, post_type, slug, summary, cover_media, allow_comments FROM posts WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, tag, post_type, slug, summary, cover_media, allow_comments FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $oldPost = $checkStmt->fetch();
 
@@ -129,7 +129,7 @@ try {
     // 否则，用户设置了新的slug值，使用新值
 
     // 更新文章
-    $sql = "UPDATE posts SET tag = ?, post_type = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, updated_at = NOW() WHERE id = ?";
+    $sql = "UPDATE pt_posts SET tag = ?, post_type = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $tag,
@@ -145,10 +145,10 @@ try {
 
     // 更新旧标签和新标签的计数
     if ($oldTag != $tag) {
-        $updateOldTag = $pdo->prepare("UPDATE tags SET post_count = (SELECT COUNT(*) FROM posts WHERE tag = ?) WHERE tag = ?");
+        $updateOldTag = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
         $updateOldTag->execute([$oldTag, $oldTag]);
     }
-    $updateNewTag = $pdo->prepare("UPDATE tags SET post_count = (SELECT COUNT(*) FROM posts WHERE tag = ?) WHERE tag = ?");
+    $updateNewTag = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
     $updateNewTag->execute([$tag, $tag]);
 
     success([

@@ -31,7 +31,7 @@ try {
     $pdo = getDB();
     
     // 检查文章是否存在
-    $checkStmt = $pdo->prepare("SELECT id, active FROM posts WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, active FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $post = $checkStmt->fetch();
     
@@ -43,7 +43,7 @@ try {
     $newActive = $post['active'] == 1 ? 0 : 1;
     
     // 更新文章状态
-    $sql = "UPDATE posts SET active = ?, updated_at = NOW() WHERE id = ?";
+    $sql = "UPDATE pt_posts SET active = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$newActive, $id]);
     

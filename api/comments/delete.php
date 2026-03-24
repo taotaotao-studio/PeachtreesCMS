@@ -31,14 +31,14 @@ try {
     $pdo = getDB();
     
     // 检查评论是否存在
-    $checkStmt = $pdo->prepare("SELECT id FROM comments WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id FROM pt_comments WHERE id = ?");
     $checkStmt->execute([$id]);
     if (!$checkStmt->fetch()) {
         notFound('评论不存在');
     }
     
     // 删除评论（级联删除会自动删除子评论）
-    $sql = "DELETE FROM comments WHERE id = ?";
+    $sql = "DELETE FROM pt_comments WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id]);
     

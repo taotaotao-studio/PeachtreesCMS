@@ -27,7 +27,7 @@ try {
     $pdo = getDB();
     $pdo->beginTransaction();
     
-    $stmt = $pdo->prepare("INSERT INTO options (option_key, option_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE option_value = ?");
+    $stmt = $pdo->prepare("INSERT INTO pt_options (option_key, option_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE option_value = ?");
     
     foreach ($input as $key => $value) {
         $stmt->execute([$key, $value, $value]);

@@ -35,7 +35,7 @@ try {
 
     // 如果提供了post_id，检查文章是否存在
     if ($postId > 0) {
-        $postStmt = $pdo->prepare("SELECT id FROM posts WHERE id = ?");
+        $postStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE id = ?");
         $postStmt->execute([$postId]);
         if (!$postStmt->fetch()) {
             notFound('文章不存在');
@@ -69,7 +69,7 @@ try {
         $whereClause = implode(' AND ', $whereConditions);
     }
     // 计算总数
-    $countSql = "SELECT COUNT(*) as total FROM comments c WHERE " . $whereClause;
+    $countSql = "SELECT COUNT(*) as total FROM pt_comments c WHERE " . $whereClause;
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $total = $countStmt->fetch()['total'];
@@ -88,8 +88,8 @@ try {
                 cu.nickname,
                 cu.website,
                 cu.avatar
-            FROM comments c
-            LEFT JOIN comment_users cu ON c.user_id = cu.id
+            FROM pt_comments c
+            LEFT JOIN pt_comment_users cu ON c.user_id = cu.id
             WHERE " . $whereClause . "
             ORDER BY c.created_at DESC
             LIMIT ? OFFSET ?";

@@ -34,7 +34,7 @@ try {
     $pdo = getDB();
 
     // 检查主题是否存在
-    $checkStmt = $pdo->prepare("SELECT id FROM themes WHERE slug = ? LIMIT 1");
+    $checkStmt = $pdo->prepare("SELECT id FROM pt_themes WHERE slug = ? LIMIT 1");
     $checkStmt->execute([$themeSlug]);
     $theme = $checkStmt->fetch();
 
@@ -50,7 +50,7 @@ try {
     ];
 
     // 保存用户自定义布局配置
-    $updateStmt = $pdo->prepare("UPDATE themes SET user_layout_config = ?, updated_at = NOW() WHERE slug = ?");
+    $updateStmt = $pdo->prepare("UPDATE pt_themes SET user_layout_config = ?, updated_at = NOW() WHERE slug = ?");
     $updateStmt->execute([json_encode($normalizedLayout, JSON_UNESCAPED_UNICODE), $themeSlug]);
 
     success([

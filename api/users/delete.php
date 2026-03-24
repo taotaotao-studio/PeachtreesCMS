@@ -40,7 +40,7 @@ try {
     $pdo = getDB();
     
     // 检查用户是否存在
-    $checkStmt = $pdo->prepare("SELECT id, username FROM users WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, username FROM pt_users WHERE id = ?");
     $checkStmt->execute([$id]);
     $user = $checkStmt->fetch();
     
@@ -49,7 +49,7 @@ try {
     }
     
     // 删除用户
-    $deleteStmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+    $deleteStmt = $pdo->prepare("DELETE FROM pt_users WHERE id = ?");
     $deleteStmt->execute([$id]);
     
     success(null, '用户删除成功');

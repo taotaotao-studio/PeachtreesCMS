@@ -78,10 +78,10 @@ try {
         $slug = normalizeTagSlug((string) $term->term_slug, (string) $term->term_name);
         $name = trim((string) $term->term_name) ?: $slug;
 
-        $stmt = $pdo->prepare("SELECT tag FROM tags WHERE tag = ?");
+        $stmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");
         $stmt->execute([$slug]);
         if (!$stmt->fetch()) {
-            $insertTag = $pdo->prepare("INSERT INTO tags (tag, display_name, post_count) VALUES (?, ?, 0)");
+            $insertTag = $pdo->prepare("INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)");
             $insertTag->execute([$slug, $name]);
             $createdTags++;
         }
@@ -127,10 +127,10 @@ try {
             $tagName = trim((string) $category) ?: $tagSlug;
 
             if (!isset($tagMap[$tagSlug])) {
-                $stmt = $pdo->prepare("SELECT tag FROM tags WHERE tag = ?");
+                $stmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");
                 $stmt->execute([$tagSlug]);
                 if (!$stmt->fetch()) {
-                    $insertTag = $pdo->prepare("INSERT INTO tags (tag, display_name, post_count) VALUES (?, ?, 0)");
+                    $insertTag = $pdo->prepare("INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)");
                     $insertTag->execute([$tagSlug, $tagName]);
                     $createdTags++;
                 }
@@ -144,10 +144,10 @@ try {
         if (!isset($postTag)) {
             $postTag = 'uncategorized';
             if (!isset($tagMap[$postTag])) {
-                $stmt = $pdo->prepare("SELECT tag FROM tags WHERE tag = ?");
+                $stmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");
                 $stmt->execute([$postTag]);
                 if (!$stmt->fetch()) {
-                    $insertTag = $pdo->prepare("INSERT INTO tags (tag, display_name, post_count) VALUES (?, ?, 0)");
+                    $insertTag = $pdo->prepare("INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)");
                     $insertTag->execute([$postTag, '未分类']);
                     $createdTags++;
                 }
@@ -175,13 +175,13 @@ try {
 
         $existingPost = null;
         if ($slug !== '') {
-            $findPost = $pdo->prepare("SELECT id FROM posts WHERE slug = ?");
+            $findPost = $pdo->prepare("SELECT id FROM pt_posts WHERE slug = ?");
             $findPost->execute([$slug]);
             $existingPost = $findPost->fetch();
         }
 
         if (!$existingPost && $sourcePostId > 0) {
-            $findPost = $pdo->prepare("SELECT id FROM posts WHERE id = ?");
+            $findPost = $pdo->prepare("SELECT id FROM pt_posts WHERE id = ?");
             $findPost->execute([$sourcePostId]);
             $existingPost = $findPost->fetch();
         }
@@ -189,7 +189,7 @@ try {
         if ($existingPost) {
             $postId = (int) $existingPost['id'];
             $updatePost = $pdo->prepare("
-                UPDATE posts
+                UPDATE pt_posts
                 SET tag = ?, post_type = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, active = ?, created_at = ?, updated_at = ?
                 WHERE id = ?
             ");
@@ -210,7 +210,7 @@ try {
             $updatedPosts++;
         } else {
             $insertPost = $pdo->prepare("
-                INSERT INTO posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at)
+                INSERT INTO pt_posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             $insertPost->execute([
@@ -260,17 +260,17 @@ try {
 
             $userId = null;
             if ($email !== '') {
-                $findUser = $pdo->prepare("SELECT id FROM comment_users WHERE email = ?");
+                $findUser = $pdo->prepare("SELECT id FROM pt_comment_users WHERE email = ?");
                 $findUser->execute([$email]);
                 $user = $findUser->fetch();
 
                 if ($user) {
                     $userId = (int) $user['id'];
-                    $updateUser = $pdo->prepare("UPDATE comment_users SET nickname = ?, website = ? WHERE id = ?");
+                    $updateUser = $pdo->prepare("UPDATE pt_comment_users SET nickname = ?, website = ? WHERE id = ?");
                     $updateUser->execute([$nickname, $website !== '' ? $website : null, $userId]);
                 } else {
                     $insertUser = $pdo->prepare("
-                        INSERT INTO comment_users (email, nickname, website, created_at)
+                        INSERT INTO pt_comment_users (email, nickname, website, created_at)
                         VALUES (?, ?, ?, NOW())
                     ");
                     $insertUser->execute([$email, $nickname, $website !== '' ? $website : null]);
@@ -278,14 +278,14 @@ try {
                 }
             } else {
                 $generatedEmail = 'imported-' . md5($nickname . '|' . $commentContent . '|' . $commentDate) . '@local.invalid';
-                $findUser = $pdo->prepare("SELECT id FROM comment_users WHERE email = ?");
+                $findUser = $pdo->prepare("SELECT id FROM pt_comment_users WHERE email = ?");
                 $findUser->execute([$generatedEmail]);
                 $user = $findUser->fetch();
                 if ($user) {
                     $userId = (int) $user['id'];
                 } else {
                     $insertUser = $pdo->prepare("
-                        INSERT INTO comment_users (email, nickname, website, created_at)
+                        INSERT INTO pt_comment_users (email, nickname, website, created_at)
                         VALUES (?, ?, ?, NOW())
                     ");
                     $insertUser->execute([$generatedEmail, $nickname, $website !== '' ? $website : null]);
@@ -294,7 +294,7 @@ try {
             }
 
             $checkComment = $pdo->prepare("
-                SELECT id FROM comments
+                SELECT id FROM pt_comments
                 WHERE post_id = ? AND user_id = ? AND content = ? AND created_at = ?
                 LIMIT 1
             ");
@@ -307,7 +307,7 @@ try {
             }
 
             $insertComment = $pdo->prepare("
-                INSERT INTO comments (post_id, user_id, content, status, parent_id, ip, created_at, updated_at)
+                INSERT INTO pt_comments (post_id, user_id, content, status, parent_id, ip, created_at, updated_at)
                 VALUES (?, ?, ?, ?, NULL, ?, ?, ?)
             ");
             $insertComment->execute([
@@ -324,13 +324,13 @@ try {
             $createdComments++;
 
             if ($sourceParentId > 0 && isset($commentIdMap[$sourceParentId])) {
-                $updateParent = $pdo->prepare("UPDATE comments SET parent_id = ? WHERE id = ?");
+                $updateParent = $pdo->prepare("UPDATE pt_comments SET parent_id = ? WHERE id = ?");
                 $updateParent->execute([$commentIdMap[$sourceParentId], $localCommentId]);
             }
         }
     }
 
-    $pdo->exec("UPDATE tags t SET post_count = (SELECT COUNT(*) FROM posts WHERE tag = t.tag)");
+    $pdo->exec("UPDATE pt_tags t SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = t.tag)");
     $pdo->commit();
 
     success([
