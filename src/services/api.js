@@ -115,4 +115,12 @@ export const dataAPI = {
     })
 }
 
+// 插件 API
+export const pluginsAPI = {
+  getList: () =>
+    api.get('/plugins/index.php'),
+  setEnabled: (data) =>
+    api.post('/plugins/update.php', data)
+}
+
 export default api

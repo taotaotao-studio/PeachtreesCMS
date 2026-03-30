@@ -25,6 +25,9 @@ import CommentWhitelist from './pages/admin/CommentWhitelist'
 import Themes from './pages/admin/Themes'
 import Settings from './pages/admin/Settings'
 import Data from './pages/admin/Data'
+import PluginDetail from './pages/admin/PluginDetail'
+import MailPublish from './pages/admin/MailPublish'
+import Plugins from './pages/admin/Plugins'
 
 // Protected Route
 function ProtectedRoute({ children }) {
@@ -75,6 +78,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <Route path="themes" element={<Themes />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="data" element={<Data />} />
+                <Route path="plugins" element={<Plugins />} />
+                <Route path="plugins/mail-publish" element={<MailPublish />} />
+                <Route path="plugins/:slug" element={<PluginDetail />} />
               </Route>
 
               {/* 404 - 重定向到后台 */}

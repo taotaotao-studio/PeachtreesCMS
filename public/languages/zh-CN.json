@@ -190,5 +190,22 @@
     "editorAddAudio": "上传音频",
     "editorUndo": "撤销",
     "editorRedo": "重做",
-    "editorSourceCode": "源码"
+    "editorSourceCode": "源码",
+    "plugins": "插件",
+    "pluginNotFound": "未找到该插件",
+    "pluginSlug": "插件标识",
+    "mailPublish": "邮件发布",
+    "mailPublishDesc": "配置邮件发布文章的密钥、白名单和默认分类。",
+    "mailPublishSecret": "发布密钥",
+    "mailPublishWhitelist": "发件人白名单",
+    "mailPublishWhitelistHelp": "多个邮箱用逗号、空格或分号分隔。留空表示不限制发件人。",
+    "mailPublishDefaultTag": "默认分类",
+    "mailPublishDefaultTagHelp": "选择一个默认分类，发布时自动写入该分类。留空表示不设置分类。",
+    "mailPublishSaved": "邮件发布设置已保存",
+    "mailPublishLoadFailed": "加载邮件发布设置失败",
+    "pluginManagement": "插件管理",
+    "pluginManagementDesc": "启用或停用插件后，侧边栏会显示已启用插件。",
+    "pluginEmpty": "未发现插件",
+    "status": "状态",
+    "actions": "操作"
 }

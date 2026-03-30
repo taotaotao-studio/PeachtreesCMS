@@ -190,5 +190,22 @@
     "editorAddAudio": "Upload Audio",
     "editorUndo": "Undo",
     "editorRedo": "Redo",
-    "editorSourceCode": "Source Code"
+    "editorSourceCode": "Source Code",
+    "plugins": "Plugins",
+    "pluginNotFound": "Plugin not found",
+    "pluginSlug": "Plugin Slug",
+    "mailPublish": "Mail Publish",
+    "mailPublishDesc": "Configure secret, sender whitelist, and default tag for email publishing.",
+    "mailPublishSecret": "Publish Secret",
+    "mailPublishWhitelist": "Sender Whitelist",
+    "mailPublishWhitelistHelp": "Separate multiple emails with commas, spaces, or semicolons. Leave empty to allow any sender.",
+    "mailPublishDefaultTag": "Default Tag",
+    "mailPublishDefaultTagHelp": "Select a default tag to apply on publish. Leave empty to skip tagging.",
+    "mailPublishSaved": "Mail publish settings saved",
+    "mailPublishLoadFailed": "Failed to load mail publish settings",
+    "pluginManagement": "Plugin Management",
+    "pluginManagementDesc": "Enable or disable plugins. Only enabled plugins appear in the sidebar.",
+    "pluginEmpty": "No plugins found",
+    "status": "Status",
+    "actions": "Actions"
 }

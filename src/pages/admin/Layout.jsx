@@ -1,25 +1,41 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { optionsAPI } from '../../services/api'
+import { pluginsAPI } from '../../services/api'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
-  const { lang, language, setLanguage } = useLanguage()
-  const { refetchSettings } = useTheme()
+  const { lang, language } = useLanguage()
+  const [plugins, setPlugins] = useState([])
 
-  const handleLanguageChange = async (e) => {
-    const newLang = e.target.value
-    try {
-      await optionsAPI.update({ default_lang: newLang })
-      setLanguage(newLang)
-      refetchSettings()
-    } catch (err) {
-      console.error('Failed to update language:', err)
-      alert('Failed to update language setting')
+  useEffect(() => {
+    const loadPlugins = async () => {
+      try {
+        const res = await pluginsAPI.getList()
+        if (res.success) {
+          setPlugins(res.data)
+        }
+      } catch (err) {
+        console.error('Failed to load plugins:', err)
+      }
     }
-  }
+
+    loadPlugins()
+  }, [])
+
+  const pluginItems = useMemo(() => {
+    return plugins.filter((plugin) => plugin.enabled !== false).map((plugin) => {
+      const label = language === 'en-US'
+        ? plugin.name_en || plugin.name
+        : plugin.name
+      return {
+        slug: plugin.slug,
+        label,
+        path: plugin.admin_path || `/admin/plugins/${plugin.slug}`
+      }
+    })
+  }, [plugins, language])
 
   return (
     <div className="d-flex min-vh-100">
@@ -122,6 +138,33 @@ export default function AdminLayout() {
               {lang('dataManagement')}
             </NavLink>
           </li>
+          {(pluginItems.length > 0 || plugins.length > 0) && (
+            <>
+              <li className="nav-item mt-2 text-uppercase small text-muted px-3">
+                {lang('plugins')}
+              </li>
+              <li className="nav-item">
+                <NavLink
+                  to="/admin/plugins"
+                  className={({ isActive }) => `nav-link text-white ${isActive ? 'active' : ''}`}
+                >
+                  <i className="bi bi-sliders me-2"></i>
+                  {lang('pluginManagement')}
+                </NavLink>
+              </li>
+              {pluginItems.map((plugin) => (
+                <li className="nav-item" key={plugin.slug}>
+                  <NavLink
+                    to={plugin.path}
+                    className={({ isActive }) => `nav-link text-white ${isActive ? 'active' : ''}`}
+                  >
+                    <i className="bi bi-plug me-2"></i>
+                    {plugin.label}
+                  </NavLink>
+                </li>
+              ))}
+            </>
+          )}
         </ul>
       </nav>
 
@@ -130,17 +173,6 @@ export default function AdminLayout() {
         {/* Top bar */}
         <nav className="navbar navbar-expand navbar-light bg-light border-bottom px-3">
           <div className="ms-auto d-flex align-items-center gap-3">
-            {/* Language Switcher */}
-            <select
-              className="form-select form-select-sm"
-              style={{ width: 'auto' }}
-              value={language}
-              onChange={handleLanguageChange}
-            >
-              <option value="zh-CN">简体中文</option>
-              <option value="en-US">English</option>
-            </select>
-            
             <span className="navbar-text text-muted">
               <i className="bi bi-person me-1"></i>
               {lang('home')}, <strong>{user.username}</strong>
