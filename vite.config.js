@@ -28,22 +28,21 @@ export default defineConfig({
         admin: 'admin.html'
       },
       output: {
-        manualChunks: {
-          // React 核心库单独分块
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // Tiptap 编辑器相关 - 按需加载
-          'tiptap': [
-            '@tiptap/react',
-            '@tiptap/starter-kit',
-            '@tiptap/extension-image',
-            '@tiptap/extension-link',
-            '@tiptap/extension-table',
-            '@tiptap/extension-table-cell',
-            '@tiptap/extension-table-header',
-            '@tiptap/extension-table-row'
-          ],
-          // Swiper 单独分块
-          'swiper': ['swiper']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // React 核心库单独分块
+            if (['react', 'react-dom', 'react-router-dom'].some(pkg => id.includes(pkg))) {
+              return 'react-vendor'
+            }
+            // Tiptap 编辑器相关
+            if (id.includes('@tiptap')) {
+              return 'tiptap'
+            }
+            // Swiper
+            if (id.includes('swiper')) {
+              return 'swiper'
+            }
+          }
         }
       }
     },
