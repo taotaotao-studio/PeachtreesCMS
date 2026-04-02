@@ -177,9 +177,9 @@ if ($action === 'install' && empty($errors)) {
         $step = 1;
     } else {
         $pdo = $result['pdo'];
-        $sqlPath = dirname(__DIR__) . '/database.sql';
+        $sqlPath = dirname(__DIR__) . '/data-init.sql';
         if (!is_file($sqlPath)) {
-            $errors[] = '未找到 database.sql，请确认文件存在。';
+            $errors[] = '未找到 sql 文件，请确认文件存在。';
             $step = 1;
         } else {
             $sql = file_get_contents($sqlPath);

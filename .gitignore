@@ -1,11 +1,8 @@
 # Dependencies
 node_modules
 
-# Build output
-dist
-
 # static files
-static_html
+static_html/*
 
 # IDE
 .idea
