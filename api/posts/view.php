@@ -56,7 +56,13 @@ try {
     }
 
     $coverMedia = json_decode($post['cover_media'] ?? '[]', true);
-    $post['cover_media'] = is_array($coverMedia) ? $coverMedia : [];
+    $coverMedia = is_array($coverMedia) ? $coverMedia : [];
+    $post['cover_media'] = array_map(function ($path) {
+        if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
+            return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+        }
+        return $path;
+    }, $coverMedia);
 
     // 获取上一篇文章（ID更小的最近一篇，且已发布）
     $prevSql = "SELECT id, title, slug FROM pt_posts WHERE id < ? AND active = 1 ORDER BY id DESC LIMIT 1";

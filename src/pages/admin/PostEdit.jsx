@@ -317,16 +317,36 @@ export default function PostEdit({ forcedPostType = null }) {
                     <i className="bi bi-collection me-1"></i>
                     {lang('postType')}
                   </label>
-                  <select
-                    name="post_type"
-                    className="form-select"
-                    value={form.post_type}
-                    onChange={handleChange}
-                    disabled={!!forcedPostType}
-                  >
-                    <option value="normal">normal</option>
-                    <option value="big-picture">big-picture</option>
-                  </select>
+                  <div className="d-flex gap-4">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="post_type"
+                        id="postTypeNormal"
+                        value="normal"
+                        checked={form.post_type === 'normal'}
+                        onChange={handleChange}
+                      />
+                      <label className="form-check-label" htmlFor="postTypeNormal">
+                        normal
+                      </label>
+                    </div>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="post_type"
+                        id="postTypeBigPicture"
+                        value="big-picture"
+                        checked={form.post_type === 'big-picture'}
+                        onChange={handleChange}
+                      />
+                      <label className="form-check-label" htmlFor="postTypeBigPicture">
+                        big-picture
+                      </label>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -10,7 +10,6 @@ import AdminLayout from './pages/admin/Layout'
 import Login from './pages/admin/Login'
 import PostList from './pages/admin/PostList'
 import PostEdit from './pages/admin/PostEdit'
-import BigPicturePostEdit from './pages/admin/BigPicturePostEdit'
 import Tags from './pages/admin/Tags'
 import Users from './pages/admin/Users'
 import Comments from './pages/admin/Comments'
@@ -57,7 +56,6 @@ function App() {
                 <Route index element={<Navigate to="/admin/posts" replace />} />
                 <Route path="posts" element={<PostList />} />
                 <Route path="posts/new" element={<PostEdit />} />
-                <Route path="posts/new-big-picture" element={<BigPicturePostEdit />} />
                 <Route path="posts/edit/:id" element={<PostEdit />} />
                 <Route path="tags" element={<Tags />} />
                 <Route path="users" element={<Users />} />

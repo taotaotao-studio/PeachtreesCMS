@@ -68,11 +68,11 @@ export default function AdminLayout() {
           </li>
           <li className="nav-item">
             <NavLink
-              to="/admin/posts/new-big-picture"
+              to="/admin/media"
               className={({ isActive }) => `nav-link text-white ${isActive ? 'active' : ''}`}
             >
-              <i className="bi bi-image me-2"></i>
-              {lang('addBigPicture')}
+              <i className="bi bi-folder2-open me-2"></i>
+              {lang('mediaManagement')}
             </NavLink>
           </li>
           <li className="nav-item">

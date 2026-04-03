@@ -87,6 +87,21 @@ function rewriteContentUrls(html, prefix) {
   return output
 }
 
+function rewriteAssetPath(inputPath, prefix) {
+  if (!inputPath) return inputPath
+  let pathValue = inputPath
+  if (pathValue.startsWith('/')) {
+    pathValue = pathValue.slice(1)
+  }
+  if (pathValue.startsWith('upload/')) {
+    return `${prefix}${pathValue}`
+  }
+  if (pathValue.startsWith('theme/')) {
+    return `${prefix}${pathValue}`
+  }
+  return inputPath
+}
+
 function buildTagMap(tags) {
   const map = {}
   for (const tag of tags) {
@@ -168,6 +183,17 @@ async function main() {
   const uploadDest = path.join(outDir, 'upload')
   await copyDir(uploadSrc, uploadDest)
 
+  const assetsDir = path.join(outDir, 'assets')
+  await ensureDir(assetsDir)
+  const swiperCss = path.join(root, 'node_modules', 'swiper', 'swiper-bundle.min.css')
+  const swiperJs = path.join(root, 'node_modules', 'swiper', 'swiper-bundle.min.js')
+  if (fsSync.existsSync(swiperCss)) {
+    await fs.copyFile(swiperCss, path.join(assetsDir, 'swiper-bundle.min.css'))
+  }
+  if (fsSync.existsSync(swiperJs)) {
+    await fs.copyFile(swiperJs, path.join(assetsDir, 'swiper-bundle.min.js'))
+  }
+
   const tagMap = buildTagMap(tags)
   const posts = postsRaw
     .map((post) => ({
@@ -180,6 +206,8 @@ async function main() {
       if (bd !== ad) return bd - ad
       return (b.id || 0) - (a.id || 0)
     })
+
+  const hasBigPicture = posts.some((post) => post.post_type === 'big-picture')
 
   const vite = await createServer({
     root,
@@ -225,6 +253,37 @@ async function main() {
     return `${prefix}theme/${encodeURIComponent(theme.slug)}/${theme.entry_css}`
   }
 
+  const extraCssFor = (relativePath) => {
+    if (!hasBigPicture) return []
+    const prefix = prefixFor(relativePath)
+    return [`${prefix}assets/swiper-bundle.min.css`]
+  }
+
+  const extraJsFor = (relativePath) => {
+    if (!hasBigPicture) return []
+    const prefix = prefixFor(relativePath)
+    return [`${prefix}assets/swiper-bundle.min.js`]
+  }
+
+  const extraInlineScriptsFor = () => {
+    if (!hasBigPicture) return []
+    const script = `
+      (function () {
+        var el = document.querySelector('.main-big-picture-swiper');
+        if (!el || typeof window.Swiper === 'undefined') return;
+        try {
+          new window.Swiper(el, {
+            loop: true,
+            autoplay: false,
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+          });
+        } catch (e) {}
+      })();
+    `;
+    return [script];
+  }
+
   // Home pages
   const homePages = paginate(posts, perPage)
   for (const pageData of homePages) {
@@ -240,6 +299,9 @@ async function main() {
       layout,
       prefix,
       themeHref: themeHrefFor(relPath),
+      extraCss: extraCssFor(relPath),
+      extraJs: extraJsFor(relPath),
+      extraInlineScripts: extraInlineScriptsFor(),
       labels: { ...labels, categoryName: '' },
       baseName
     })
@@ -264,6 +326,9 @@ async function main() {
         layout,
         prefix,
         themeHref: themeHrefFor(relPath),
+        extraCss: extraCssFor(relPath),
+        extraJs: extraJsFor(relPath),
+        extraInlineScripts: extraInlineScriptsFor(),
         labels: { ...labels, categoryName: tag.display_name || tag.tag },
         baseName
       })
@@ -281,6 +346,9 @@ async function main() {
     const relPath = path.posix.join('post', fileName)
     const prefix = prefixFor(relPath)
     post.content = rewriteContentUrls(post.content || '', prefix)
+    if (Array.isArray(post.cover_media)) {
+      post.cover_media = post.cover_media.map((item) => rewriteAssetPath(item, prefix))
+    }
 
     const html = renderPostPage({
       siteOptions,
@@ -291,7 +359,10 @@ async function main() {
       layout,
       prefix,
       themeHref: themeHrefFor(relPath),
-      labels
+      labels,
+      extraCss: extraCssFor(relPath),
+      extraJs: extraJsFor(relPath),
+      extraInlineScripts: extraInlineScriptsFor()
     })
     const postDir = path.join(outDir, 'post')
     await ensureDir(postDir)

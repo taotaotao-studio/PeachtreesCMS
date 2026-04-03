@@ -28,6 +28,12 @@
   padding-left: 0.75rem;
 }
 
+.tiptap-editor .tiptap-editor-content img {
+  max-width: 960px;
+  height: auto;
+  display: block;
+}
+
 .tiptap-editor .tiptap-editor-content table {
   border-collapse: collapse;
   width: 100%;
@@ -71,4 +77,54 @@
   border-top-left-radius: 0.375rem;
   border-top-right-radius: 0.375rem;
   background: #f1f3f5;
+}
+
+.media-preview {
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-thumb {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 6px;
+}
+
+.media-audio {
+  width: 100%;
+}
+
+.media-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+@media (max-width: 1600px) {
+  .media-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .media-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .media-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .media-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

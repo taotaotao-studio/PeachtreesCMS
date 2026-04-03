@@ -123,4 +123,14 @@ export const pluginsAPI = {
     api.post('/plugins/update.php', data)
 }
 
+// 媒体 API
+export const mediaAPI = {
+  getList: () =>
+    api.get('/media/index.php'),
+  upload: (formData) =>
+    api.post('/media/upload.php', formData),
+  delete: (path) =>
+    api.delete('/media/delete.php', { data: { path } })
+}
+
 export default api

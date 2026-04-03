@@ -89,7 +89,7 @@ try {
     $layoutConfig['post']['columns']['sidebar'] = $resolveSidebar($layoutConfig['post'] ?? []) ?: 'left';
 
     $postsStmt = $pdo->query(<<<SQL
-        SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.content, p.created_at, p.updated_at, t.display_name
+        SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.created_at, p.updated_at, t.display_name
         FROM pt_posts p
         LEFT JOIN pt_tags t ON t.tag = p.tag
         WHERE p.active = 1
@@ -105,6 +105,15 @@ SQL);
             $excerpt .= '...';
         }
         $post['excerpt'] = $excerpt;
+
+        $coverMedia = json_decode($post['cover_media'] ?? '[]', true);
+        $coverMedia = is_array($coverMedia) ? $coverMedia : [];
+        $post['cover_media'] = array_map(function ($path) {
+            if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
+                return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+            }
+            return $path;
+        }, $coverMedia);
     }
     unset($post);
 

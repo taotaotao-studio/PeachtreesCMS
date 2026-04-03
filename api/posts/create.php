@@ -34,7 +34,10 @@ if (empty($title)) {
     error('文章标题不能为空');
 }
 
-// 验证slug
+try {
+    $pdo = getDB();
+
+    // 验证slug
 if (!empty($slug)) {
     // 检查slug格式：只允许字母、数字、连字符和下划线
     if (!preg_match('/^[a-zA-Z0-9_-]+$/', $slug)) {
@@ -67,9 +70,6 @@ if (!is_array($coverMedia)) {
 if ($postType === 'big-picture' && count($coverMedia) === 0) {
     error('大片文章至少需要上传一个封面媒体文件');
 }
-
-try {
-    $pdo = getDB();
     
     // 检查标签是否存在
     $tagStmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");

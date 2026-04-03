@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 上传大片文章封面媒体
- * POST /api/posts/upload-bigpicture.php
- * 需要登录
+ * PeachtreesCMS API - 上传媒体文件
+ * POST /api/media/upload.php
+ * 需要管理员权限
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -14,33 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-requireAuth();
+requireAdmin();
 
 if (!isset($_FILES['files']) && !isset($_FILES['file'])) {
-    // 检查是否是因为超出了 post_max_size
-    $contentLength = $_SERVER['CONTENT_LENGTH'] ?? 0;
-    $postMaxSize = ini_get('post_max_size');
-    
-    // 将 post_max_size 转换为字节
-    $multiplier = 1;
-    $unit = strtoupper(substr($postMaxSize, -1));
-    if ($unit === 'G') $multiplier = 1024 * 1024 * 1024;
-    elseif ($unit === 'M') $multiplier = 1024 * 1024;
-    elseif ($unit === 'K') $multiplier = 1024;
-    $limit = intval($postMaxSize) * $multiplier;
-
-    if ($contentLength > $limit) {
-        error("上传内容太大(当前 {$contentLength} 字节)，超过了服务器限制的 post_max_size ({$postMaxSize})。请减少图片数量或压缩图片后再试。");
-    }
-
-    error('未接收到上传文件，请检查是否选择了文件或单个文件是否过大。');
+    error('请上传媒体文件');
 }
 
-/**
- * 标准化文件数组，兼容单文件和多文件。
- * @return array
- */
-function normalizeUploadFiles() {
+if (!function_exists('finfo_open')) {
+    serverError('服务器配置错误：fileinfo 扩展未启用，请启用该扩展后再试');
+}
+
+function normalizeUploadFiles(): array {
     if (isset($_FILES['files'])) {
         $files = $_FILES['files'];
     } else {
@@ -71,11 +55,6 @@ function normalizeUploadFiles() {
     return $normalized;
 }
 
-// 检查 fileinfo 扩展是否可用
-if (!function_exists('finfo_open')) {
-    serverError('服务器配置错误：fileinfo 扩展未启用，请启用该扩展后再试');
-}
-
 try {
     $allowedMimeToExt = [
         'image/jpeg' => 'jpg',
@@ -83,10 +62,19 @@ try {
         'image/webp' => 'webp',
         'image/gif' => 'gif',
         'video/mp4' => 'mp4',
+        'video/webm' => 'webm',
+        'video/ogg' => 'ogg',
+        'audio/mpeg' => 'mp3',
+        'audio/mp3' => 'mp3',
+        'audio/wav' => 'wav',
+        'audio/x-wav' => 'wav',
+        'audio/ogg' => 'ogg',
+        'audio/mp4' => 'm4a',
+        'audio/aac' => 'aac',
     ];
 
     $uploadFiles = normalizeUploadFiles();
-    $savedPaths = [];
+    $saved = [];
 
     $year = date('Y');
     $month = date('m');
@@ -126,7 +114,7 @@ try {
         finfo_close($finfo);
 
         if (!isset($allowedMimeToExt[$mime])) {
-            error('不支持的文件类型：' . $mime . '。仅支持 jpg/png/webp/gif/mp4');
+            error('仅支持 jpg/png/webp/gif/mp4/webm/ogg/mp3/wav/m4a/aac 媒体文件');
         }
 
         $ext = $allowedMimeToExt[$mime];
@@ -139,11 +127,14 @@ try {
             serverError('保存文件失败');
         }
 
-        $savedPaths[] = $relativePath;
+        $saved[] = [
+            'path' => $relativePath,
+            'url' => '/' . $relativePath
+        ];
     }
 
     success([
-        'paths' => $savedPaths
+        'files' => $saved
     ], '上传成功');
 } catch (Exception $e) {
     serverError('上传失败: ' . $e->getMessage());

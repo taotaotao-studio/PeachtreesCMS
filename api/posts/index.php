@@ -71,7 +71,13 @@ try {
     // 处理文章摘要
     foreach ($posts as &$post) {
         $coverMedia = json_decode($post['cover_media'] ?? '[]', true);
-        $post['cover_media'] = is_array($coverMedia) ? $coverMedia : [];
+        $coverMedia = is_array($coverMedia) ? $coverMedia : [];
+        $post['cover_media'] = array_map(function ($path) {
+            if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
+                return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+            }
+            return $path;
+        }, $coverMedia);
 
         // 生成摘要 (去除HTML标签，截取前200字符)
         $summarySource = trim($post['summary'] ?? '') !== '' ? $post['summary'] : $post['content'];

@@ -17,7 +17,6 @@ import AdminLayout from './pages/admin/Layout'
 import Login from './pages/admin/Login'
 import PostList from './pages/admin/PostList'
 import PostEdit from './pages/admin/PostEdit'
-import BigPicturePostEdit from './pages/admin/BigPicturePostEdit'
 import Tags from './pages/admin/Tags'
 import Users from './pages/admin/Users'
 import Comments from './pages/admin/Comments'
@@ -25,6 +24,7 @@ import CommentWhitelist from './pages/admin/CommentWhitelist'
 import Themes from './pages/admin/Themes'
 import Settings from './pages/admin/Settings'
 import Data from './pages/admin/Data'
+import Media from './pages/admin/Media'
 import PluginDetail from './pages/admin/PluginDetail'
 import MailPublish from './pages/admin/MailPublish'
 import Plugins from './pages/admin/Plugins'
@@ -69,8 +69,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <Route index element={<Navigate to="/admin/posts" replace />} />
                 <Route path="posts" element={<PostList />} />
                 <Route path="posts/new" element={<PostEdit />} />
-                <Route path="posts/new-big-picture" element={<BigPicturePostEdit />} />
                 <Route path="posts/edit/:id" element={<PostEdit />} />
+                <Route path="media" element={<Media />} />
                 <Route path="tags" element={<Tags />} />
                 <Route path="users" element={<Users />} />
                 <Route path="comments" element={<Comments />} />
