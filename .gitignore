@@ -23,3 +23,7 @@ upload/*
 
 # plan
 .plan
+
+
+# sessions
+api/sessions/*

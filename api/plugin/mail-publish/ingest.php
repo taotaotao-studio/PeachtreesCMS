@@ -1,7 +1,7 @@
 <?php
 /**
  * POST /api/plugin/mail-publish/ingest.php
- * 邮件发布文章（文本 + 可选单张图片）
+ * Publish post via email (text + optional single image)
  */
 
 require_once __DIR__ . '/../../config.php';
@@ -96,7 +96,7 @@ $uploadImageUrl = null;
 $uploadImagePath = null;
 
 if (!function_exists('finfo_open')) {
-    serverError('服务器配置错误：fileinfo 扩展未启用');
+    serverError('Server configuration error: fileinfo extension not enabled');
 }
 
 if (!empty($_FILES)) {
@@ -156,21 +156,21 @@ if (!empty($_FILES)) {
 
         if (!is_dir($absoluteDir)) {
             if (!is_dir($uploadRoot) || !is_writable($uploadRoot)) {
-                serverError('上传目录不可写，请检查 upload 目录权限: ' . $uploadRoot);
+                serverError('Upload directory not writable, check pt_upload permissions: ' . $uploadRoot);
             }
             if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
-                serverError('创建上传目录失败: ' . $absoluteDir);
+                serverError('Failed to create upload directory: ' . $absoluteDir);
             }
         }
 
         $ext = $allowedMimeToExt[$mime];
         $hash = bin2hex(random_bytes(8));
         $filename = "{$day}-{$hash}.{$ext}";
-        $relativePath = "upload/{$relativeDir}/{$filename}";
+        $relativePath = "pt_upload/{$relativeDir}/{$filename}";
         $absolutePath = UPLOAD_DIR . "{$relativeDir}/{$filename}";
 
         if (!move_uploaded_file($file['tmp_name'], $absolutePath)) {
-            serverError('保存附件失败');
+            serverError('Failed to save attachment');
         }
 
         $uploadImagePath = $relativePath;
@@ -198,27 +198,3 @@ if ($uploadImageUrl) {
 $plainSummary = strip_tags($contentHtml);
 if (function_exists('mb_substr')) {
     $summary = mb_substr($plainSummary, 0, 160, 'UTF-8');
-} else {
-    $summary = substr($plainSummary, 0, 160);
-}
-
-$stmt = $pdo->prepare('INSERT INTO pt_posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, NULL, ?, NULL, ?, 1, 1, NOW(), NOW())');
-$stmt->execute([
-    $tag,
-    'normal',
-    $subject,
-    $summary,
-    $contentHtml
-]);
-
-$postId = (int)$pdo->lastInsertId();
-
-if ($tag) {
-    $updateCountStmt = $pdo->prepare('UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?');
-    $updateCountStmt->execute([$tag, $tag]);
-}
-
-success([
-    'id' => $postId,
-    'image' => $uploadImagePath
-], 'Post published');

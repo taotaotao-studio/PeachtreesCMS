@@ -1,19 +1,19 @@
 <?php
 /**
- * PeachtreesCMS API - RSS 订阅源
+ * PeachtreesCMS API - RSS Feed
  * GET /api/rss.php
  */
 
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/config.php';
 
-// 设置 XML 响应头
+// Set XML response header
 header('Content-Type: application/xml; charset=utf-8');
 
 try {
     $pdo = getDB();
     
-    // 获取最新 30 篇已发布文章
+    // Get latest 30 published posts
     $sql = "SELECT p.id, p.title, p.content, p.created_at, t.display_name
             FROM pt_posts p
             LEFT JOIN pt_tags t ON p.tag = t.tag
@@ -23,20 +23,20 @@ try {
     $stmt = $pdo->query($sql);
     $posts = $stmt->fetchAll();
     
-    // 网站基本信息
+    // Site basic info
     $siteTitle = 'PeachtreesCMS';
     $siteUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
-    $siteDesc = '文章订阅';
+    $siteDesc = 'Article Feed';
     $now = date('D, d M Y H:i:s T');
     
-    // 构建 RSS XML
+    // Build RSS XML
     $xml = '<?xml version="1.0" encoding="utf-8"?>' . "\n";
     $xml .= '<rss version="2.0">' . "\n";
     $xml .= '  <channel>' . "\n";
     $xml .= "    <title>{$siteTitle}</title>\n";
     $xml .= "    <link>{$siteUrl}</link>\n";
     $xml .= "    <description>{$siteDesc}</description>\n";
-    $xml .= "    <language>zh-cn</language>\n";
+    $xml .= "    <language>en</language>\n";
     $xml .= "    <pubDate>{$now}</pubDate>\n";
     $xml .= "    <lastBuildDate>{$now}</lastBuildDate>\n";
     

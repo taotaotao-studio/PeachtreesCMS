@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 删除文章
+ * PeachtreesCMS API - Delete Post
  * DELETE /api/posts/delete.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,53 +10,53 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 接受 DELETE 和 POST 请求
+// Accept DELETE and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify authentication
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 
-// 也支持从 GET 参数获取
+// Also support GET parameter
 if ($id <= 0) {
     $id = intval($_GET['id'] ?? 0);
 }
 
 if ($id <= 0) {
-    error('文章ID无效');
+    error('Invalid post ID');
 }
 
 try {
     $pdo = getDB();
     
-    // 检查文章是否存在并获取标签
+    // Check if post exists and get its tag
     $checkStmt = $pdo->prepare("SELECT id, tag FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $post = $checkStmt->fetch();
     
     if (!$post) {
-        notFound('文章不存在');
+        notFound('Post not found');
     }
     
     $tag = $post['tag'];
     
-    // 删除文章
+    // Delete post
     $deleteStmt = $pdo->prepare("DELETE FROM pt_posts WHERE id = ?");
     $deleteStmt->execute([$id]);
     
-    // 更新标签计数
+    // Update tag count
     if ($tag) {
         $updateCountStmt = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
         $updateCountStmt->execute([$tag, $tag]);
     }
     
-    success(null, '文章删除成功');
+    success(null, 'Post deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('删除文章失败: ' . $e->getMessage());
+    serverError('Failed to delete post: ' . $e->getMessage());
 }

@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 修改密码
+ * PeachtreesCMS API - Change Password
  * PUT /api/users/update-password.php
- * 需要登录
+ * Requires login
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -11,63 +11,63 @@ require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../password.php';
 
-// 只接受 PUT 和 POST 请求
+// Only accept PUT and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify login
 $user = requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $oldPassword = $input['oldPassword'] ?? '';
 $newPassword = $input['newPassword'] ?? '';
 $confirmPassword = $input['confirmPassword'] ?? '';
 
-// 验证输入
+// Validate input
 if (empty($oldPassword)) {
-    error('请输入原密码');
+    error('Please enter current password');
 }
 
 if (empty($newPassword)) {
-    error('请输入新密码');
+    error('Please enter new password');
 }
 
 if (strlen($newPassword) < 6) {
-    error('新密码长度至少6位');
+    error('Password must be at least 6 characters');
 }
 
 if ($newPassword !== $confirmPassword) {
-    error('两次输入的密码不一致');
+    error('Passwords do not match');
 }
 
 try {
     $pdo = getDB();
     
-    // 获取当前用户的密码
+    // Get current user's password
     $stmt = $pdo->prepare("SELECT password_hash FROM pt_users WHERE id = ?");
     $stmt->execute([$user['id']]);
     $currentUser = $stmt->fetch();
     
     if (!$currentUser) {
-        error('用户不存在');
+        error('User not found');
     }
-    
-    // 验证原密码
+
+    // Verify current password
     if (!verifyPassword($oldPassword, $currentUser['password_hash'])) {
-        error('原密码错误');
+        error('Current password is incorrect');
     }
-    
-    // 加密新密码
+
+    // Hash new password
     $hashedPassword = hashPassword($newPassword);
-    
-    // 更新密码
+
+    // Update password
     $updateStmt = $pdo->prepare("UPDATE pt_users SET password_hash = ? WHERE id = ?");
     $updateStmt->execute([$hashedPassword, $user['id']]);
     
-    success(null, '密码修改成功');
+    success(null, 'Password changed successfully');
     
 } catch (PDOException $e) {
-    serverError('修改密码失败: ' . $e->getMessage());
+    serverError('Failed to change password: ' . $e->getMessage());
 }

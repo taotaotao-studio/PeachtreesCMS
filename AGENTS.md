@@ -53,5 +53,5 @@
 - Keep route behavior compatible with `#/path` URLs.
 
 ## Local Environment Assumptions
-- Development is expected to run behind Nginx with working `/api` and `/upload` paths.
+- Development is expected to run behind Nginx with working `/api` and `/pt_upload` paths.
 - Keep Vite proxy and backend path assumptions aligned with that environment.

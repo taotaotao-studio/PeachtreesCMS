@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 主题列表（后台）
+ * PeachtreesCMS API - Theme List (Admin)
  * GET /api/themes/index.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -28,9 +28,9 @@ try {
         $theme['is_active'] = intval($theme['is_active']);
         $theme['user_layout_config'] = $theme['user_layout_config'] ? json_decode($theme['user_layout_config'], true) : null;
         $theme['css_url'] = themePublicCssUrl($theme['slug'], $theme['entry_css']);
-        // 添加主题的默认布局（从 layout.json 读取）
+        // Add theme's default layout
         $theme['default_layout'] = loadThemeLayout($theme['slug']);
-        // 确保 default_layout 包含所有必需的字段
+        // Ensure default_layout contains all required fields
         if (!isset($theme['default_layout']['home']['left_sidebar_blocks'])) {
             $theme['default_layout']['home']['left_sidebar_blocks'] = $theme['default_layout']['home']['sidebar_blocks'] ?? [];
         }
@@ -47,7 +47,7 @@ try {
 
     success([
         'themes' => $themes
-    ], '获取主题列表成功');
+    ], 'Theme list retrieved successfully');
 } catch (PDOException $e) {
-    serverError('获取主题列表失败: ' . $e->getMessage());
+    serverError('Failed to get theme list: ' . $e->getMessage());
 }

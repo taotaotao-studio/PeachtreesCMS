@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 删除标签
+ * PeachtreesCMS API - Delete Tag
  * DELETE /api/tags/delete.php
- * 需要登录
+ * Requires login
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,54 +10,54 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 接受 DELETE 和 POST 请求
+// Accept DELETE and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify login
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 
-// 也支持从 GET 参数获取
+// Also support GET parameter
 if ($id <= 0) {
     $id = intval($_GET['id'] ?? 0);
 }
 
 if ($id <= 0) {
-    error('标签ID无效');
+    error('Invalid tag ID');
 }
 
 try {
     $pdo = getDB();
     
-    // 检查标签是否存在
+    // Check if tag exists
     $checkStmt = $pdo->prepare("SELECT id, tag FROM pt_tags WHERE id = ?");
     $checkStmt->execute([$id]);
     $tag = $checkStmt->fetch();
     
     if (!$tag) {
-        notFound('标签不存在');
+        notFound('Tag not found');
     }
     
-    // 检查是否有文章使用此标签
+    // Check if any posts use this tag
     $countStmt = $pdo->prepare("SELECT COUNT(*) FROM pt_posts WHERE tag = ?");
     $countStmt->execute([$tag['tag']]);
     $postCount = $countStmt->fetchColumn();
     
     if ($postCount > 0) {
-        error("无法删除：有 {$postCount} 篇文章使用此标签");
+        error("Cannot delete: {$postCount} posts are using this tag");
     }
     
-    // 删除标签
+    // Delete tag
     $deleteStmt = $pdo->prepare("DELETE FROM pt_tags WHERE id = ?");
     $deleteStmt->execute([$id]);
     
-    success(null, '标签删除成功');
+    success(null, 'Tag deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('删除标签失败: ' . $e->getMessage());
+    serverError('Failed to delete tag: ' . $e->getMessage());
 }

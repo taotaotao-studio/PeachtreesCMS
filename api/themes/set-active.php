@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 切换激活主题
+ * PeachtreesCMS API - Switch Active Theme
  * PUT /api/themes/set-active.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -21,7 +21,7 @@ $input = getJsonInput();
 $slug = trim($input['slug'] ?? '');
 
 if ($slug === '' || !isValidThemeSlug($slug)) {
-    error('主题标识无效');
+    error('Invalid theme slug');
 }
 
 try {
@@ -32,7 +32,7 @@ try {
     $checkStmt->execute([$slug]);
     $theme = $checkStmt->fetch();
     if (!$theme) {
-        notFound('主题不存在，请先将主题包放入 public/theme 目录');
+        notFound('Theme not found, please add theme package to public/theme directory');
     }
 
     $targetId = intval($theme['id']);
@@ -41,7 +41,7 @@ try {
 
     success([
         'slug' => $slug
-    ], '主题切换成功');
+    ], 'Theme switched successfully');
 } catch (PDOException $e) {
-    serverError('主题切换失败: ' . $e->getMessage());
+    serverError('Failed to switch theme: ' . $e->getMessage());
 }

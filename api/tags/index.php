@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 获取标签列表
+ * PeachtreesCMS API - Get Tag List
  * GET /api/tags/index.php
  */
 
@@ -8,7 +8,7 @@ require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 
-// 只接受 GET 请求
+// Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     error('Method not allowed', 405);
 }
@@ -23,5 +23,5 @@ try {
     success($tags);
     
 } catch (PDOException $e) {
-    serverError('获取标签列表失败: ' . $e->getMessage());
+    serverError('Failed to get tag list: ' . $e->getMessage());
 }

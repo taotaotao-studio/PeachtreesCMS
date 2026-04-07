@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 导出静态 HTML 站点
+ * PeachtreesCMS API - Export Static HTML Site
  * GET /api/data/export-static.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -11,7 +11,7 @@ require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../themes/_helpers.php';
 
-// 防止警告/提示污染 JSON 输出
+// Prevent warnings/notices from polluting JSON output
 ini_set('display_errors', '0');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -23,7 +23,7 @@ requireAdmin();
 function ensureDir(string $dir): void {
     if (!is_dir($dir)) {
         if (!@mkdir($dir, 0755, true) && !is_dir($dir)) {
-            serverError('无法创建目录: ' . $dir);
+            serverError('Cannot create directory: ' . $dir);
         }
     }
 }
@@ -110,7 +110,7 @@ SQL);
         $coverMedia = is_array($coverMedia) ? $coverMedia : [];
         $post['cover_media'] = array_map(function ($path) {
             if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
-                return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+                return 'pt_upload/media/' . substr($path, strlen('upload/bigpicture/'));
             }
             return $path;
         }, $coverMedia);
@@ -151,7 +151,7 @@ SQL);
             'progress' => 0,
             'message' => 'SSG script not found'
         ]);
-        serverError('导出静态站点失败: 缺少脚本文件');
+        serverError('Static export failed: missing script file');
     }
 
     $cmd = 'node ' . escapeshellarg($scriptPath)
@@ -172,7 +172,7 @@ SQL);
             'progress' => 0,
             'message' => 'Failed to start export'
         ]);
-        serverError('导出静态站点失败: 无法启动导出脚本');
+        serverError('Static export failed: cannot start export script');
     }
 
     $stdout = stream_get_contents($pipes[1]);
@@ -189,8 +189,8 @@ SQL);
             'progress' => 0,
             'message' => 'Export failed'
         ]);
-        $errorMessage = trim($stderr) !== '' ? $stderr : '未知错误';
-        serverError('导出静态站点失败: ' . $errorMessage);
+        $errorMessage = trim($stderr) !== '' ? $stderr : 'Unknown error';
+        serverError('Static export failed: ' . $errorMessage);
     }
 
     $result = json_decode($stdout, true);
@@ -203,5 +203,5 @@ SQL);
 
     success($result, 'Static site generated');
 } catch (PDOException $e) {
-    serverError('导出静态站点失败: ' . $e->getMessage());
+    serverError('Static export failed: ' . $e->getMessage());
 }

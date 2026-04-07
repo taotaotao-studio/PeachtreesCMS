@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 用户登录
+ * PeachtreesCMS API - User Login
  * POST /api/auth/login.php
  */
 
@@ -9,53 +9,53 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../password.php';
 
-// 只接受 POST 请求
+// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $username = $input['username'] ?? '';
 $password = $input['password'] ?? '';
 
-// 验证输入
+// Validate input
 if (empty($username) || empty($password)) {
-    error('用户名和密码不能为空');
+    error('Username and password cannot be empty');
 }
 
 try {
     $pdo = getDB();
     
-    // 查询用户
+    // Query user
     $stmt = $pdo->prepare("SELECT id, username, email, password_hash FROM pt_users WHERE username = ? OR email = ?");
     $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
     
     if (!$user) {
-        error('用户不存在');
+        error('User does not exist');
     }
-    
-    // 验证密码
+
+    // Verify password
     if (!verifyPassword($password, $user['password_hash'])) {
-        error('密码错误');
+        error('Incorrect password');
     }
-    
-    // 设置 Session
+
+    // Set Session
     $_SESSION['uid'] = $user['id'];
     $_SESSION['user'] = $user['username'];
-    
-    // 更新登录时间
+
+    // Update login time
     $updateStmt = $pdo->prepare("UPDATE pt_users SET last_login_at = NOW() WHERE id = ?");
     $updateStmt->execute([$user['id']]);
-    
-    // 返回成功
+
+    // Return success
     success([
         'id' => $user['id'],
         'username' => $user['username'],
         'email' => $user['email']
-    ], '登录成功');
-    
+    ], 'Login successful');
+
 } catch (PDOException $e) {
-    serverError('登录失败: ' . $e->getMessage());
+    serverError('Login failed: ' . $e->getMessage());
 }

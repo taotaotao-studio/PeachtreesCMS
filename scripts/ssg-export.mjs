@@ -80,9 +80,9 @@ function sanitizeSlug(slug, fallbackId) {
 function rewriteContentUrls(html, prefix) {
   if (!html) return ''
   let output = html
-  output = output.replace(/(src|href)=(["'])\/upload\//g, `$1=$2${prefix}upload/`)
+  output = output.replace(/(src|href)=(["'])\/pt_upload\//g, `$1=$2${prefix}pt_upload/`)
   output = output.replace(/(src|href)=(["'])\/theme\//g, `$1=$2${prefix}theme/`)
-  output = output.replace(/url\((["']?)\/upload\//g, `url($1${prefix}upload/`)
+  output = output.replace(/url\((["']?)\/pt_upload\//g, `url($1${prefix}pt_upload/`)
   output = output.replace(/url\((["']?)\/theme\//g, `url($1${prefix}theme/`)
   return output
 }

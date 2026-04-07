@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 获取评论列表
+ * PeachtreesCMS API - Get Comment List
  * GET /api/comments/index.php
  */
 
@@ -9,40 +9,40 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 GET 请求
+// Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     error('Method not allowed', 405);
 }
 
-// 获取请求参数
+// Get request parameters
 $postId = intval($_GET['post_id'] ?? 0);
-$status = intval($_GET['status'] ?? 1); // 默认只显示已通过的评论
+$status = intval($_GET['status'] ?? 1); // Default only show approved comments
 $page = max(1, intval($_GET['page'] ?? 1));
 $pageSize = max(1, min(100, intval($_GET['page_size'] ?? 20)));
-$flat = isset($_GET['flat']) && $_GET['flat'] === '1'; // 是否返回平铺列表（后台需要）
+$flat = isset($_GET['flat']) && $_GET['flat'] === '1'; // Whether to return flat list (admin needs this)
 
-// 是否需要管理员权限（查看所有状态的评论）
+// Check if admin privileges are needed (to view all status comments)
 $isAdmin = isAdmin();
 
-// 验证输入
-// 如果不是管理员，必须提供post_id
+// Validate input
+// If not admin, must provide post_id
 if (!$isAdmin && $postId <= 0) {
-    error('文章ID无效');
+    error('Invalid post ID');
 }
 
 try {
     $pdo = getDB();
 
-    // 如果提供了post_id，检查文章是否存在
+    // If post_id is provided, check if post exists
     if ($postId > 0) {
         $postStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE id = ?");
         $postStmt->execute([$postId]);
         if (!$postStmt->fetch()) {
-            notFound('文章不存在');
+            notFound('Post not found');
         }
     }
 
-    // 构建查询条件
+    // Build query conditions
     $whereConditions = [];
     $params = [];
 
@@ -52,29 +52,29 @@ try {
     }
 
     if ($isAdmin) {
-        // 管理员可以查看所有状态的评论
+        // Admin can view all status comments
         if ($status > 0) {
             $whereConditions[] = "c.status = ?";
             $params[] = $status;
         }
     } else {
-        // 普通用户只能看到已通过的评论
+        // Regular users can only see approved comments
         $whereConditions[] = "c.status = 1";
     }
 
-    // 如果没有where条件，使用1=1
+    // If no where conditions, use 1=1
     if (empty($whereConditions)) {
         $whereClause = "1=1";
     } else {
         $whereClause = implode(' AND ', $whereConditions);
     }
-    // 计算总数
+    // Calculate total count
     $countSql = "SELECT COUNT(*) as total FROM pt_comments c WHERE " . $whereClause;
     $countStmt = $pdo->prepare($countSql);
     $countStmt->execute($params);
     $total = $countStmt->fetch()['total'];
 
-    // 获取评论列表
+    // Get comment list
     $offset = ($page - 1) * $pageSize;
     $sql = "SELECT
                 c.id,
@@ -101,19 +101,19 @@ try {
     $stmt->execute($params);
     $comments = $stmt->fetchAll();
 
-    // 根据flat参数决定返回树形结构还是平铺列表
+    // Based on flat parameter, decide whether to return tree structure or flat list
     if ($flat) {
-        // 返回平铺列表（后台需要）
+        // Return flat list (admin needs this)
         $finalComments = $comments;
     } else {
-        // 构建树形结构（处理回复）
+        // Build tree structure (handle replies)
         $commentMap = [];
         $rootComments = [];
 
         foreach ($comments as $comment) {
             $commentMap[$comment['id']] = $comment;
             $comment['replies'] = [];
-            $comment['can_reply'] = true; // 是否可以回复
+            $comment['can_reply'] = true; // Whether can reply
         }
 
         foreach ($comments as $comment) {
@@ -138,8 +138,8 @@ try {
             'total_pages' => ceil($total / $pageSize)
         ],
         'is_admin' => $isAdmin
-    ], '获取评论列表成功');
+    ], 'Comment list retrieved successfully');
 
 } catch (PDOException $e) {
-    serverError('获取评论列表失败: ' . $e->getMessage());
+    serverError('Failed to get comment list: ' . $e->getMessage());
 }

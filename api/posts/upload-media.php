@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 上传普通文章媒体（图片/视频/音频）
+ * PeachtreesCMS API - Upload Normal Post Media (image/video/audio)
  * POST /api/posts/upload-media.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -17,17 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 requireAuth();
 
 if (!isset($_FILES['file'])) {
-    error('请上传媒体文件');
+    error('Please upload a media file');
 }
 
 $file = $_FILES['file'];
 if ($file['error'] !== UPLOAD_ERR_OK) {
-    error('文件上传失败');
+    error('File upload failed');
 }
 
-// 检查 fileinfo 扩展是否可用
+// Check if fileinfo extension is available
 if (!function_exists('finfo_open')) {
-    serverError('服务器配置错误：fileinfo 扩展未启用，请启用该扩展后再试');
+    serverError('Server configuration error: fileinfo extension not enabled. Please enable this extension and try again.');
 }
 
 try {
@@ -51,7 +51,7 @@ try {
     finfo_close($finfo);
 
     if (!isset($allowedMimeToExt[$mime])) {
-        error('仅支持 jpg/png/webp/gif/mp4/mp3/wav/ogg/m4a/aac 媒体文件');
+        error('Only jpg/png/webp/gif/mp4/mp3/wav/ogg/m4a/aac media files are supported');
     }
 
     $year = date('Y');
@@ -63,27 +63,27 @@ try {
 
     if (!is_dir($absoluteDir)) {
         if (!is_dir($uploadRoot) || !is_writable($uploadRoot)) {
-            serverError('上传目录不可写，请检查 upload 目录权限: ' . $uploadRoot);
+            serverError('Upload directory not writable, please check upload directory permissions: ' . $uploadRoot);
         }
         if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
-            serverError('创建上传目录失败: ' . $absoluteDir);
+            serverError('Failed to create upload directory: ' . $absoluteDir);
         }
     }
 
     $ext = $allowedMimeToExt[$mime];
     $hash = bin2hex(random_bytes(8));
     $filename = "{$day}-{$hash}.{$ext}";
-    $relativePath = "upload/{$relativeDir}/{$filename}";
+    $relativePath = "pt_upload/{$relativeDir}/{$filename}";
     $absolutePath = UPLOAD_DIR . "{$relativeDir}/{$filename}";
 
     if (!move_uploaded_file($file['tmp_name'], $absolutePath)) {
-        serverError('保存文件失败');
+        serverError('Failed to save file');
     }
 
     success([
         'path' => $relativePath,
         'url' => '/' . $relativePath
-    ], '上传成功');
+    ], 'Upload successful');
 } catch (Exception $e) {
-    serverError('上传失败: ' . $e->getMessage());
+    serverError('Upload failed: ' . $e->getMessage());
 }

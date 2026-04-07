@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 当前激活主题（前台）
+ * PeachtreesCMS API - Active Theme (Frontend)
  * GET /api/themes/active.php
  */
 
@@ -21,7 +21,7 @@ try {
     $theme = $stmt ? $stmt->fetch() : null;
 
     if (!$theme) {
-        success(null, '当前没有激活主题');
+        success(null, 'No active theme');
     }
 
     $versionToken = rawurlencode($theme['updated_at'] ?? date('Y-m-d H:i:s'));
@@ -29,7 +29,7 @@ try {
     $userLayoutConfig = json_decode($theme['user_layout_config'] ?? 'null', true);
     $theme['layout'] = loadThemeLayout($theme['slug'], $userLayoutConfig);
 
-    success($theme, '获取激活主题成功');
+    success($theme, 'Active theme retrieved successfully');
 } catch (PDOException $e) {
-    serverError('获取激活主题失败: ' . $e->getMessage());
+    serverError('Failed to get active theme: ' . $e->getMessage());
 }

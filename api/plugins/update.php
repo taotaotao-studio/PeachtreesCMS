@@ -1,7 +1,7 @@
 <?php
 /**
  * POST /api/plugins/update.php
- * 更新插件启用状态
+ * Update plugin enabled status
  */
 
 require_once __DIR__ . '/../config.php';

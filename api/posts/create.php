@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 创建文章
+ * PeachtreesCMS API - Create Post
  * POST /api/posts/create.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,15 +10,15 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 POST 请求
+// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify authentication
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $title = trim($input['title'] ?? '');
 $slug = trim($input['slug'] ?? '');
@@ -29,56 +29,56 @@ $coverMedia = $input['cover_media'] ?? [];
 $content = $input['content'] ?? '';
 $allowComments = isset($input['allow_comments']) ? intval($input['allow_comments']) : 1;
 
-// 验证输入
+// Validate input
 if (empty($title)) {
-    error('文章标题不能为空');
+    error('Post title cannot be empty');
 }
 
 try {
     $pdo = getDB();
 
-    // 验证slug
+    // Validate slug
 if (!empty($slug)) {
-    // 检查slug格式：只允许字母、数字、连字符和下划线
+    // Check slug format: only allow letters, numbers, hyphens and underscores
     if (!preg_match('/^[a-zA-Z0-9_-]+$/', $slug)) {
-        error('URL标识只能包含字母、数字、连字符和下划线');
+        error('URL slug can only contain letters, numbers, hyphens and underscores');
     }
-    // 检查slug是否已存在
+    // Check if slug already exists
     $slugCheckStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE slug = ?");
     $slugCheckStmt->execute([$slug]);
     if ($slugCheckStmt->fetch()) {
-        error('URL标识已存在');
+        error('URL slug already exists');
     }
 }
 
 if (empty($tag)) {
-    error('请选择分类');
+    error('Please select a category');
 }
 
 if (!in_array($postType, ['normal', 'big-picture'], true)) {
-    error('文章类型无效');
+    error('Invalid post type');
 }
 
 if (!in_array($allowComments, [0, 1])) {
-    error('评论开关值无效');
+    error('Invalid comment switch value');
 }
 
 if (!is_array($coverMedia)) {
-    error('封面媒体格式无效');
+    error('Invalid cover media format');
 }
 
 if ($postType === 'big-picture' && count($coverMedia) === 0) {
-    error('大片文章至少需要上传一个封面媒体文件');
+    error('Big-picture post requires at least one cover media file');
 }
     
-    // 检查标签是否存在
+    // Check if tag exists
     $tagStmt = $pdo->prepare("SELECT tag FROM pt_tags WHERE tag = ?");
     $tagStmt->execute([$tag]);
     if (!$tagStmt->fetch()) {
-        error('所选分类不存在');
+        error('Selected category does not exist');
     }
     
-    // 插入文章
+    // Insert post
     $sql = "INSERT INTO pt_posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -94,14 +94,14 @@ if ($postType === 'big-picture' && count($coverMedia) === 0) {
     
     $postId = $pdo->lastInsertId();
     
-    // 更新标签计数
+    // Update tag count
     $updateCountStmt = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
     $updateCountStmt->execute([$tag, $tag]);
     
     success([
         'id' => $postId
-    ], '文章创建成功');
+    ], 'Post created successfully');
     
 } catch (PDOException $e) {
-    serverError('创建文章失败: ' . $e->getMessage());
+    serverError('Failed to create post: ' . $e->getMessage());
 }

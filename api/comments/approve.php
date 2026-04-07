@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 审核评论
+ * PeachtreesCMS API - Approve Comment
  * PUT /api/comments/approve.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,55 +10,55 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 PUT 请求
+// Only accept PUT and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify authentication
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 $status = intval($input['status'] ?? 1);
 
-// 验证输入
+// Validate input
 if ($id <= 0) {
-    error('评论ID无效');
+    error('Invalid comment ID');
 }
 
 if (!in_array($status, [0, 1, 2])) {
-    error('状态值无效');
+    error('Invalid status value');
 }
 
-// 状态说明
+// Status descriptions
 $statusText = [
-    0 => '待审核',
-    1 => '已通过',
-    2 => '已拒绝'
+    0 => 'Pending',
+    1 => 'Approved',
+    2 => 'Rejected'
 ];
 
 try {
     $pdo = getDB();
     
-    // 检查评论是否存在
+    // Check if comment exists
     $checkStmt = $pdo->prepare("SELECT id, status, user_id FROM pt_comments WHERE id = ?");
     $checkStmt->execute([$id]);
     $comment = $checkStmt->fetch();
     
     if (!$comment) {
-        notFound('评论不存在');
+        notFound('Comment not found');
     }
     
-    // 更新评论状态
+    // Update comment status
     $sql = "UPDATE pt_comments SET status = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$status, $id]);
 
-    // 自动白名单规则：
-    // 1) 累计 >=3 条已通过评论 -> trusted
-    // 2) 累计 >=2 条已拒绝评论 -> blocked（若当前已是 trusted 则不自动降级）
+    // Auto whitelist rules:
+    // 1) Cumulative >=3 approved comments -> trusted
+    // 2) Cumulative >=2 rejected comments -> blocked (if currently trusted, don't auto-downgrade)
     try {
         $userId = intval($comment['user_id'] ?? 0);
         if ($userId > 0 && in_array($status, [1, 2], true)) {
@@ -82,7 +82,7 @@ try {
                             expires_at = NULL,
                             updated_at = NOW()
                     ");
-                    $upsertTrustedStmt->execute([$userId, '系统自动：累计3条已通过评论']);
+                    $upsertTrustedStmt->execute([$userId, 'Auto: 3+ approved comments']);
                 }
             }
 
@@ -101,20 +101,20 @@ try {
                             expires_at = NULL,
                             updated_at = NOW()
                     ");
-                    $upsertBlockedStmt->execute([$userId, '系统自动：累计2条被拒评论']);
+                    $upsertBlockedStmt->execute([$userId, 'Auto: 2+ rejected comments']);
                 }
             }
         }
     } catch (PDOException $e) {
-        // 白名单表不存在或自动规则写入失败时，不影响评论审核主流程
+        // Whitelist table doesn't exist or auto rule write failed, don't affect main comment approval flow
     }
     
     success([
         'id' => $id,
         'status' => $status,
         'status_text' => $statusText[$status]
-    ], '评论审核成功');
+    ], 'Comment reviewed successfully');
     
 } catch (PDOException $e) {
-    serverError('审核评论失败: ' . $e->getMessage());
+    serverError('Failed to review comment: ' . $e->getMessage());
 }

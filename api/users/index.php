@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 获取用户列表
+ * PeachtreesCMS API - Get User List
  * GET /api/users/index.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,12 +10,12 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 GET 请求
+// Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     error('Method not allowed', 405);
 }
 
-// 验证管理员权限
+// Verify admin privileges
 requireAdmin();
 
 try {
@@ -28,5 +28,5 @@ try {
     success($users);
     
 } catch (PDOException $e) {
-    serverError('获取用户列表失败: ' . $e->getMessage());
+    serverError('Failed to get user list: ' . $e->getMessage());
 }

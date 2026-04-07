@@ -1,8 +1,10 @@
 <?php
 /**
- * PeachtreesCMS - 安装向导
- * 访问 /pt_api/install.php
+ * PeachtreesCMS - Installation Wizard
+ * Access via /pt_api/install.php
  */
+
+require_once __DIR__ . '/i18n.php';
 
 ini_set('display_errors', '0');
 
@@ -16,7 +18,7 @@ function normalizePrefix(string $prefix): string {
         return 'pt_';
     }
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $prefix)) {
-        throw new RuntimeException('表前缀只能包含字母、数字和下划线');
+        throw new RuntimeException(__('install.prefix_error'));
     }
     if (substr($prefix, -1) !== '_') {
         $prefix .= '_';
@@ -26,15 +28,19 @@ function normalizePrefix(string $prefix): string {
 
 function makeEnv(array $config): string {
     $lines = [];
+    $lines[] = '# PeachtreesCMS API Environment';
+    $lines[] = '';
+    $lines[] = '# Database';
     $lines[] = 'DB_HOST=' . $config['DB_HOST'];
     $lines[] = 'DB_NAME=' . $config['DB_NAME'];
     $lines[] = 'DB_USER=' . $config['DB_USER'];
     $lines[] = 'DB_PASS=' . $config['DB_PASS'];
-    $lines[] = 'DB_CHARSET=utf8mb4';
+    $lines[] = '';
+    $lines[] = '# JWT Secret (must be changed to a strong random string)';
     $lines[] = 'JWT_SECRET=' . $config['JWT_SECRET'];
-    $lines[] = 'JWT_EXPIRE=86400';
-    $lines[] = 'APP_ENV=production';
-    $lines[] = 'TIMEZONE=Asia/Shanghai';
+    $lines[] = '';
+    $lines[] = '# Upload directory (optional, leave empty for default)';
+    $lines[] = 'UPLOAD_DIR=';
     return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
@@ -131,6 +137,9 @@ function testConnection(array $cfg): array {
     }
 }
 
+// Get current language
+$currentLang = getCurrentLanguage();
+
 $action = $_POST['action'] ?? '';
 $errors = [];
 $success = '';
@@ -160,7 +169,7 @@ if ($action === 'check' && empty($errors)) {
         'DB_PASS' => $form['db_pass']
     ]);
     if (!$result['ok']) {
-        $errors[] = '连接失败：' . $result['error'];
+        $errors[] = __('install.conn_failed') . $result['error'];
         $step = 1;
     }
 }
@@ -173,13 +182,13 @@ if ($action === 'install' && empty($errors)) {
         'DB_PASS' => $form['db_pass']
     ]);
     if (!$result['ok']) {
-        $errors[] = '连接失败：' . $result['error'];
+        $errors[] = __('install.conn_failed') . $result['error'];
         $step = 1;
     } else {
         $pdo = $result['pdo'];
         $sqlPath = dirname(__DIR__) . '/data-init.sql';
         if (!is_file($sqlPath)) {
-            $errors[] = '未找到 sql 文件，请确认文件存在。';
+            $errors[] = __('install.sql_not_found');
             $step = 1;
         } else {
             $sql = file_get_contents($sqlPath);
@@ -201,10 +210,10 @@ if ($action === 'install' && empty($errors)) {
                 ]);
                 file_put_contents($envPath, $env);
 
-                $success = '安装完成，数据库已导入。';
+                $success = __('install.complete');
                 $step = 4;
             } catch (PDOException $e) {
-                $errors[] = '导入失败：' . $e->getMessage();
+                $errors[] = __('install.import_failed') . $e->getMessage();
                 $step = 2;
             }
         }
@@ -214,35 +223,51 @@ if ($action === 'install' && empty($errors)) {
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $baseUrl = $scheme . '://' . $host;
+$availableLanguages = getAvailableLanguages();
 ?>
 <!doctype html>
-<html lang="zh-CN">
+<html lang="<?php echo h($currentLang); ?>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PeachtreesCMS 安装向导</title>
+  <title><?php echo __('install.title'); ?></title>
   <style>
     body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 30px; }
     .container { max-width: 720px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
-    h1 { margin-top: 0; font-size: 22px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .header h1 { margin: 0; font-size: 22px; }
+    .lang-selector { display: flex; align-items: center; gap: 8px; }
+    .lang-selector label { font-size: 14px; color: #666; }
+    .lang-selector select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; cursor: pointer; }
     .hint { color: #666; margin-bottom: 16px; }
     .field { margin-bottom: 12px; }
     .field label { display: block; font-weight: bold; margin-bottom: 6px; }
-    .field input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; }
+    .field input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
     .actions { margin-top: 16px; display: flex; gap: 12px; }
-    .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn { padding: 10px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; }
     .btn-primary { background: #1e66f5; color: #fff; }
     .btn-secondary { background: #eee; color: #333; }
     .alert { padding: 10px 12px; border-radius: 4px; margin-bottom: 12px; }
     .alert-error { background: #ffe8e8; color: #a40000; }
     .alert-success { background: #e7f7e7; color: #1a7f1a; }
     code { background: #f2f2f2; padding: 2px 6px; border-radius: 4px; }
+    .link-group p { margin: 8px 0; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>PeachtreesCMS 安装向导</h1>
-    <p class="hint">请先在数据库中创建 <code>peachtrees</code>（或自定义）数据库，再继续安装。</p>
+    <div class="header">
+      <h1><?php echo __('install.title'); ?></h1>
+      <div class="lang-selector">
+        <label for="lang"><?php echo __('install.language'); ?>:</label>
+        <select id="lang" name="lang" onchange="changeLanguage(this.value)">
+          <?php foreach ($availableLanguages as $code => $name): ?>
+            <option value="<?php echo h($code); ?>" <?php echo $currentLang === $code ? 'selected' : ''; ?>><?php echo h($name); ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+    </div>
+    <p class="hint"><?php echo __('install.hint'); ?></p>
 
     <?php if (!empty($errors)): ?>
       <div class="alert alert-error">
@@ -257,52 +282,66 @@ $baseUrl = $scheme . '://' . $host;
     <?php endif; ?>
 
     <?php if ($step === 1): ?>
-      <form method="post">
+      <form method="post" id="mainForm">
         <input type="hidden" name="action" value="check" />
+        <input type="hidden" name="lang" id="langInput" value="<?php echo h($currentLang); ?>" />
         <div class="field">
-          <label>数据库地址</label>
+          <label><?php echo __('install.db_host'); ?></label>
           <input name="db_host" value="<?php echo h($form['db_host']); ?>" />
         </div>
         <div class="field">
-          <label>数据库名</label>
+          <label><?php echo __('install.db_name'); ?></label>
           <input name="db_name" value="<?php echo h($form['db_name']); ?>" />
         </div>
         <div class="field">
-          <label>数据库用户名</label>
+          <label><?php echo __('install.db_user'); ?></label>
           <input name="db_user" value="<?php echo h($form['db_user']); ?>" />
         </div>
         <div class="field">
-          <label>数据库密码</label>
+          <label><?php echo __('install.db_pass'); ?></label>
           <input type="password" name="db_pass" value="<?php echo h($form['db_pass']); ?>" />
         </div>
         <div class="field">
-          <label>表前缀（默认 pt_）</label>
+          <label><?php echo __('install.db_prefix'); ?></label>
           <input name="db_prefix" value="<?php echo h($form['db_prefix']); ?>" />
         </div>
         <div class="actions">
-          <button class="btn btn-primary" type="submit">下一步：测试连接</button>
+          <button class="btn btn-primary" type="submit"><?php echo __('install.next'); ?></button>
         </div>
       </form>
     <?php elseif ($step === 2): ?>
-      <form method="post">
+      <form method="post" id="mainForm">
         <input type="hidden" name="action" value="install" />
+        <input type="hidden" name="lang" id="langInput" value="<?php echo h($currentLang); ?>" />
         <input type="hidden" name="db_host" value="<?php echo h($form['db_host']); ?>" />
         <input type="hidden" name="db_name" value="<?php echo h($form['db_name']); ?>" />
         <input type="hidden" name="db_user" value="<?php echo h($form['db_user']); ?>" />
         <input type="hidden" name="db_pass" value="<?php echo h($form['db_pass']); ?>" />
         <input type="hidden" name="db_prefix" value="<?php echo h($form['db_prefix']); ?>" />
-        <div class="alert alert-success">数据库连接成功，可以开始导入数据。</div>
+        <div class="alert alert-success"><?php echo __('install.conn_success'); ?></div>
         <div class="actions">
-          <button class="btn btn-primary" type="submit">开始安装</button>
-          <a class="btn btn-secondary" href="install.php">返回修改</a>
+          <button class="btn btn-primary" type="submit"><?php echo __('install.start'); ?></button>
+          <a class="btn btn-secondary" href="install.php?lang=<?php echo h($currentLang); ?>"><?php echo __('install.back'); ?></a>
         </div>
       </form>
     <?php elseif ($step === 4): ?>
-      <div class="alert alert-success">安装完成。</div>
-      <p>进入前台首页：<a href="<?php echo h($baseUrl . '/'); ?>"><?php echo h($baseUrl . '/'); ?></a></p>
-      <p>进入后台登录：<a href="<?php echo h($baseUrl . '/admin.html#/admin/login'); ?>"><?php echo h($baseUrl . '/admin.html#/admin/login'); ?></a></p>
-      <p class="alert alert-error">安装完成后请删除 <code>api/install.php</code> 文件，避免安全风险。</p>
+      <div class="alert alert-success"><?php echo __('install.complete'); ?></div>
+      <div class="link-group">
+        <p><?php echo __('install.frontend'); ?>: <a href="<?php echo h($baseUrl . '/'); ?>"><?php echo h($baseUrl . '/'); ?></a></p>
+        <p><?php echo __('install.admin'); ?>: <a href="<?php echo h($baseUrl . '/admin.html#/admin/login'); ?>"><?php echo h($baseUrl . '/admin.html#/admin/login'); ?></a></p>
+      </div>
+      <p class="alert alert-error"><?php echo __('install.delete_hint'); ?></p>
     <?php endif; ?>
   </div>
+  <script>
+    function changeLanguage(lang) {
+      var langInput = document.getElementById('langInput');
+      if (langInput) {
+        langInput.value = lang;
+      }
+      // Redirect with lang parameter
+      window.location.href = window.location.pathname + '?lang=' + lang;
+    }
+  </script>
 </body>
 </html>

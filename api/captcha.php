@@ -1,76 +1,76 @@
 <?php
 /**
- * PeachtreesCMS API - 验证码接口
+ * PeachtreesCMS API - Captcha Interface
  * GET /api/captcha.php
  */
 
 require_once __DIR__ . '/config.php';
 
-// 启动 session
+// Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 设置响应头
+// Set response headers
 header('Content-Type: image/png');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// 生成四位数字验证码
+// Generate four-digit numeric captcha
 $code = '';
 for ($i = 0; $i < 4; $i++) {
     $code .= mt_rand(0, 9);
 }
 
-// 保存到 session
+// Save to session
 $_SESSION['captcha'] = $code;
 
-// 图片尺寸
+// Image dimensions
 $width = 120;
 $height = 40;
 
-// 创建画布
+// Create canvas
 $image = imagecreatetruecolor($width, $height);
 
-// 设置背景色（随机淡色）
+// Set background color (random light color)
 $bgColor = imagecolorallocate($image, mt_rand(220, 240), mt_rand(220, 240), mt_rand(220, 240));
 imagefill($image, 0, 0, $bgColor);
 
-// 添加干扰线
+// Add interference lines
 for ($i = 0; $i < 5; $i++) {
     $lineColor = imagecolorallocate($image, mt_rand(150, 200), mt_rand(150, 200), mt_rand(150, 200));
     imageline($image, mt_rand(0, $width), mt_rand(0, $height), mt_rand(0, $width), mt_rand(0, $height), $lineColor);
 }
 
-// 添加干扰点
+// Add interference dots
 for ($i = 0; $i < 50; $i++) {
     $dotColor = imagecolorallocate($image, mt_rand(150, 200), mt_rand(150, 200), mt_rand(150, 200));
     imagesetpixel($image, mt_rand(0, $width), mt_rand(0, $height), $dotColor);
 }
 
-// 绘制验证码（使用内置字体）
+// Draw captcha (using built-in font)
 $fontSize = 5;
 $fontWidth = imagefontwidth($fontSize);
 
-// 计算每个字符的位置
+// Calculate position for each character
 $charWidth = $width / 4;
 
 for ($i = 0; $i < 4; $i++) {
-    // 随机颜色
+    // Random color
     $textColor = imagecolorallocate($image, mt_rand(50, 120), mt_rand(50, 120), mt_rand(50, 120));
     
-    // 计算字符位置（确保是整数）
+    // Calculate character position (ensure integer)
     $x = intval($i * $charWidth + ($charWidth - $fontWidth) / 2);
     $y = mt_rand(10, 20);
     
-    // 绘制字符
+    // Draw character
     imagestring($image, $fontSize, $x, $y, $code[$i], $textColor);
 }
 
-// 输出图片
+// Output image
 imagepng($image);
 
-// 释放内存
+// Free memory
 imagedestroy($image);
 exit;

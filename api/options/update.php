@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 更新网站设置
+ * PeachtreesCMS API - Update Site Settings
  * POST /api/options/update.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -14,13 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 检查管理员权限
+// Check admin privileges
 requireAdmin();
 
-// 获取输入
+// Get input
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || !is_array($input)) {
-    badRequest('无效的设置数据');
+    badRequest('Invalid settings data');
 }
 
 try {
@@ -34,10 +34,10 @@ try {
     }
     
     $pdo->commit();
-    success(null, '设置保存成功');
+    success(null, 'Settings saved successfully');
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    serverError('保存设置失败: ' . $e->getMessage());
+    serverError('Failed to save settings: ' . $e->getMessage());
 }

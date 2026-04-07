@@ -11,7 +11,7 @@ export default defineConfig({
         target: 'http://localhost',
         changeOrigin: true
       },
-      '/upload/': {
+      '/pt_upload/': {
         target: 'http://localhost',
         changeOrigin: true
       }

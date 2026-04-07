@@ -1,7 +1,7 @@
 <?php
 /**
  * GET /api/plugins/index.php
- * 返回插件列表
+ * Returns plugin list
  */
 
 require_once __DIR__ . '/../config.php';

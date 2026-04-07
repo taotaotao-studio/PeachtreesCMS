@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 导入 WordPress WXR 风格 XML
+ * PeachtreesCMS API - Import WordPress WXR XML
  * POST /api/data/import.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -17,19 +17,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 requireAdmin();
 
 if (!isset($_FILES['file']) || !is_uploaded_file($_FILES['file']['tmp_name'])) {
-    error('请上传 XML 文件');
+    error('Please upload an XML file');
 }
 
 $file = $_FILES['file'];
 $extension = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
 if ($extension !== 'xml') {
-    error('仅支持 XML 文件');
+    error('Only XML files are supported');
 }
 
 libxml_use_internal_errors(true);
 $xml = simplexml_load_file($file['tmp_name'], 'SimpleXMLElement', LIBXML_NOCDATA);
 if ($xml === false || !isset($xml->channel)) {
-    error('XML 文件格式无效');
+    error('Invalid XML file format');
 }
 
 $wp = $xml->getNamespaces(true);
@@ -148,10 +148,10 @@ try {
                 $stmt->execute([$postTag]);
                 if (!$stmt->fetch()) {
                     $insertTag = $pdo->prepare("INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)");
-                    $insertTag->execute([$postTag, '未分类']);
+                    $insertTag->execute([$postTag, 'Uncategorized']);
                     $createdTags++;
                 }
-                $tagMap[$postTag] = '未分类';
+                $tagMap[$postTag] = 'Uncategorized';
             }
         }
 
@@ -339,10 +339,10 @@ try {
         'posts_created' => $createdPosts,
         'posts_updated' => $updatedPosts,
         'comments_created' => $createdComments,
-    ], '导入完成');
+    ], 'Import completed');
 } catch (Throwable $e) {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    serverError('导入文章数据失败: ' . $e->getMessage());
+    serverError('Import failed: ' . $e->getMessage());
 }

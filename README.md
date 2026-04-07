@@ -54,7 +54,7 @@
 ├── assets/                       # 静态资源
 ├── languages/                    # 语言文件
 ├── theme/                        # 主题文件
-└── upload/                       # 上传文件目录
+└── pt_upload/                    # 上传文件目录
 ```
 
 #### 2. 配置 Nginx
@@ -74,8 +74,8 @@ http {
             alias /var/www/html/api/;
             try_files $uri $uri/ =404;
         }
-        location /upload/ {
-            alias /var/www/html/upload/;
+        location /pt_upload/ {
+            alias /var/www/html/pt_upload/;
         }
         location ~ ^/pt_api/(.+\.php)$ {
             include fastcgi_params;

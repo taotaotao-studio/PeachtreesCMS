@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 创建标签
+ * PeachtreesCMS API - Create Tag
  * POST /api/tags/create.php
- * 需要登录
+ * Requires login
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,44 +10,44 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 POST 请求
+// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify login
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $tag = trim($input['tag'] ?? '');
 $tagLocal = trim($input['display_name'] ?? '');
 
-// 验证输入
+// Validate input
 if (empty($tag)) {
-    error('标签英文名不能为空');
+    error('Tag slug cannot be empty');
 }
 
 if (empty($tagLocal)) {
-    error('标签名称不能为空');
+    error('Tag name cannot be empty');
 }
 
-// 验证英文名格式 (只允许字母、数字、下划线、连字符)
+// Validate slug format (only letters, numbers, underscores, hyphens)
 if (!preg_match('/^[a-zA-Z0-9_-]+$/', $tag)) {
-    error('标签英文名只能包含字母、数字、下划线和连字符');
+    error('Tag slug can only contain letters, numbers, underscores and hyphens');
 }
 
 try {
     $pdo = getDB();
     
-    // 检查标签是否已存在
+    // Check if tag already exists
     $checkStmt = $pdo->prepare("SELECT id FROM pt_tags WHERE tag = ?");
     $checkStmt->execute([$tag]);
     if ($checkStmt->fetch()) {
-        error('标签英文名已存在');
+        error('Tag slug already exists');
     }
     
-    // 插入标签
+    // Insert tag
     $sql = "INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$tag, $tagLocal]);
@@ -59,8 +59,8 @@ try {
         'tag' => $tag,
         'display_name' => $tagLocal,
         'post_count' => 0
-    ], '标签创建成功');
+    ], 'Tag created successfully');
     
 } catch (PDOException $e) {
-    serverError('创建标签失败: ' . $e->getMessage());
+    serverError('Failed to create tag: ' . $e->getMessage());
 }

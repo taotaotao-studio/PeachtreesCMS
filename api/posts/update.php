@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 更新文章
+ * PeachtreesCMS API - Update Post
  * PUT /api/posts/update.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,15 +10,15 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 PUT 请求
+// Only accept PUT and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify authentication
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 $title = trim($input['title'] ?? '');
@@ -29,7 +29,7 @@ $coverMedia = $input['cover_media'] ?? [];
 $content = $input['content'] ?? '';
 $allowComments = isset($input['allow_comments']) ? intval($input['allow_comments']) : null;
 
-// 处理slug - 如果没有提供或者是空字符串，设为null（使用ID作为URL）
+// Handle slug - if not provided or empty string, set to null (use ID as URL)
 $slug = null;
 if (array_key_exists('slug', $input)) {
     $slug = trim($input['slug']);
@@ -38,64 +38,64 @@ if (array_key_exists('slug', $input)) {
     }
 }
 
-// 验证输入（不需要数据库连接）
+// Validate input (no database connection needed)
 if ($id <= 0) {
-    error('文章ID无效');
+    error('Invalid post ID');
 }
 
 if (empty($title)) {
-    error('文章标题不能为空');
+    error('Post title cannot be empty');
 }
 
 if (empty($tag)) {
-    error('请选择分类');
+    error('Please select a category');
 }
 
 if (!in_array($postType, ['normal', 'big-picture'], true)) {
-    error('文章类型无效');
+    error('Invalid post type');
 }
 
 if ($allowComments !== null && !in_array($allowComments, [0, 1])) {
-    error('评论开关值无效');
+    error('Invalid comment switch value');
 }
 
 if (!is_array($coverMedia)) {
-    error('封面媒体格式无效');
+    error('Invalid cover media format');
 }
 
 if ($postType === 'big-picture' && count($coverMedia) === 0) {
-    error('大片文章至少需要上传一个封面媒体文件');
+    error('Big-picture post requires at least one cover media file');
 }
 
 try {
     $pdo = getDB();
 
-    // 验证slug（如果提供了，需要数据库连接检查重复）
+    // Validate slug (if provided, need database connection to check for duplicates)
     if ($slug !== null && $slug !== '') {
-        // 检查slug格式：只允许字母、数字、连字符和下划线
+        // Check slug format: only allow letters, numbers, hyphens and underscores
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $slug)) {
-            error('URL标识只能包含字母、数字、连字符和下划线');
+            error('URL slug can only contain letters, numbers, hyphens and underscores');
         }
-        // 检查slug是否已被其他文章使用
+        // Check if slug is already used by another post
         $slugCheckStmt = $pdo->prepare("SELECT id FROM pt_posts WHERE slug = ? AND id != ?");
         $slugCheckStmt->execute([$slug, $id]);
         if ($slugCheckStmt->fetch()) {
-            error('URL标识已存在');
+            error('URL slug already exists');
         }
     }
 
-    // 检查文章是否存在
+    // Check if post exists
     $checkStmt = $pdo->prepare("SELECT id, tag, post_type, slug, summary, cover_media, allow_comments FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $oldPost = $checkStmt->fetch();
 
     if (!$oldPost) {
-        notFound('文章不存在');
+        notFound('Post not found');
     }
 
     $oldTag = $oldPost['tag'];
 
-    // 处理默认值
+    // Handle default values
     if (!array_key_exists('post_type', $input)) {
         $postType = $oldPost['post_type'];
     }
@@ -115,20 +115,20 @@ try {
         }
     }
 
-    // 处理slug的最终值
+    // Handle final slug value
     if (!array_key_exists('slug', $input)) {
-        // 没有提供slug字段，保持原值
+        // Slug field not provided, keep original value
         $slug = $oldPost['slug'];
     } elseif ($slug === '' || $slug === null) {
-        // 提供了空值，用户想清空slug
+        // Empty value provided, user wants to clear slug
         $slug = null;
     } elseif ($slug === $oldPost['slug']) {
-        // slug值没变，保持原值
+        // Slug value unchanged, keep original value
         $slug = $oldPost['slug'];
     }
-    // 否则，用户设置了新的slug值，使用新值
+    // Otherwise, user set a new slug value, use the new value
 
-    // 更新文章
+    // Update post
     $sql = "UPDATE pt_posts SET tag = ?, post_type = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -143,7 +143,7 @@ try {
         $id
     ]);
 
-    // 更新旧标签和新标签的计数
+    // Update old and new tag counts
     if ($oldTag != $tag) {
         $updateOldTag = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
         $updateOldTag->execute([$oldTag, $oldTag]);
@@ -153,8 +153,8 @@ try {
 
     success([
         'id' => $id
-    ], '文章更新成功');
+    ], 'Post updated successfully');
 
 } catch (PDOException $e) {
-    serverError('更新文章失败: ' . $e->getMessage());
+    serverError('Failed to update post: ' . $e->getMessage());
 }

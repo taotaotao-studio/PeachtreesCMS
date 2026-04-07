@@ -1,11 +1,11 @@
 <?php
 /**
- * PeachtreesCMS API - 密码工具
- * 统一密码哈希与校验。
+ * PeachtreesCMS API - Password Utilities
+ * Unified password hashing and verification.
  */
 
 /**
- * 生成密码哈希
+ * Generate password hash
  * @param string $password
  * @return string
  */
@@ -14,9 +14,9 @@ function hashPassword(string $password): string {
 }
 
 /**
- * 校验密码
- * @param string $password 明文密码
- * @param string $storedHash 数据库存储的哈希
+ * Verify password
+ * @param string $password Plain text password
+ * @param string $storedHash Hash stored in database
  * @return bool
  */
 function verifyPassword(string $password, string $storedHash): bool {

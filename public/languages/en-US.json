@@ -93,7 +93,7 @@
     "coverSummary": "Cover Summary",
     "coverSummaryPlaceholder": "Summary text displayed at the bottom of the cover",
     "coverMedia": "Big Picture Cover Media (required, multiple allowed, supports images and mp4)",
-    "coverMediaPath": "Storage path: upload/media/year/month/day-hash.ext",
+    "coverMediaPath": "Storage path: pt_upload/media/year/month/day-hash.ext",
     "uploadedFiles": "Uploaded",
     "clearAll": "Clear All",
     "remove": "Remove",

@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 删除评论
+ * PeachtreesCMS API - Delete Comment
  * DELETE /api/comments/delete.php
- * 需要登录
+ * Requires authentication
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,42 +10,42 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 DELETE 请求
+// Only accept DELETE and POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 验证登录
+// Verify authentication
 requireAuth();
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 
-// 验证输入
+// Validate input
 if ($id <= 0) {
-    error('评论ID无效');
+    error('Invalid comment ID');
 }
 
 try {
     $pdo = getDB();
     
-    // 检查评论是否存在
+    // Check if comment exists
     $checkStmt = $pdo->prepare("SELECT id FROM pt_comments WHERE id = ?");
     $checkStmt->execute([$id]);
     if (!$checkStmt->fetch()) {
-        notFound('评论不存在');
+        notFound('Comment not found');
     }
     
-    // 删除评论（级联删除会自动删除子评论）
+    // Delete comment (cascade delete will automatically delete child comments)
     $sql = "DELETE FROM pt_comments WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id]);
     
     success([
         'id' => $id
-    ], '评论删除成功');
+    ], 'Comment deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('删除评论失败: ' . $e->getMessage());
+    serverError('Failed to delete comment: ' . $e->getMessage());
 }

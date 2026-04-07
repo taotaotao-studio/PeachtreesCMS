@@ -120,7 +120,7 @@ CREATE TABLE `pt_posts` (
 
 -- Dumping data for `pt_posts` (2 rows)
 INSERT INTO `pt_posts` (`id`, `tag`, `post_type`, `title`, `slug`, `summary`, `cover_media`, `content`, `allow_comments`, `active`, `created_at`, `updated_at`) VALUES
-('1', 'news', 'normal', '欢迎使用 PeachtreesCMS', NULL, '', '[]', '<p>这是一个基于 PHP 的内容管理系统。</p><p>现已升级为前后端分离架构，使用 Vite + React + Bootstrap 构建。</p><img src=\"/upload/media/2026/04/02-4bd40641f62fd449.jpg\"><p></p>', '1', '1', '2026-03-24 17:18:51', '2026-04-02 13:32:26'),
+('1', 'news', 'normal', '欢迎使用 PeachtreesCMS', NULL, '', '[]', '<p>这是一个基于 PHP 的内容管理系统。</p><p>现已升级为前后端分离架构，使用 Vite + React + Bootstrap 构建。</p><img src=\"/pt_upload/media/2026/04/02-4bd40641f62fd449.jpg\"><p></p>', '1', '1', '2026-03-24 17:18:51', '2026-04-02 13:32:26'),
 ('2', 'tech', 'normal', '系统功能介绍', NULL, '', NULL, '<p>系统支持以下功能：</p><ul><li>文章管理</li><li>分类标签</li><li>用户管理</li><li>RSS 订阅</li></ul>', '1', '1', '2026-03-24 17:18:51', '2026-03-24 17:18:51');
 
 

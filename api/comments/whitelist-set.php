@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 设置留言白名单状态
+ * PeachtreesCMS API - Set Comment Whitelist Status
  * PUT /api/comments/whitelist-set.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -23,21 +23,21 @@ $reason = trim($input['reason'] ?? '');
 $expiresAt = trim($input['expires_at'] ?? '');
 
 if ($email === '') {
-    error('邮箱不能为空');
+    error('Email cannot be empty');
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    error('邮箱格式不正确');
+    error('Invalid email format');
 }
 match ($status) {
     'trusted', 'blocked', 'none' => true,
-    default => error('状态值无效')
+    default => error('Invalid status value')
 };
 
 $expiresAtValue = null;
 if ($expiresAt !== '') {
     $ts = strtotime($expiresAt);
     if ($ts === false) {
-        error('过期时间格式无效');
+        error('Invalid expiration time format');
     }
     $expiresAtValue = date('Y-m-d H:i:s', $ts);
 }
@@ -49,7 +49,7 @@ try {
     $userStmt->execute([$email]);
     $commentUser = $userStmt->fetch();
     if (!$commentUser) {
-        notFound('该邮箱尚未留言，无法设置白名单');
+        notFound('This email has not commented yet, cannot set whitelist');
     }
     $commentUserId = intval($commentUser['id']);
 
@@ -59,7 +59,7 @@ try {
         success([
             'email' => $email,
             'status' => 'none',
-        ], '已移出白名单');
+        ], 'Removed from whitelist');
     }
 
     $upsertSql = "
@@ -87,8 +87,8 @@ try {
         'email' => $email,
         'status' => $status,
         'expires_at' => $expiresAtValue,
-    ], '白名单状态已更新');
+    ], 'Whitelist status updated');
 } catch (PDOException $e) {
-    serverError('设置白名单失败: ' . $e->getMessage());
+    serverError('Failed to set whitelist: ' . $e->getMessage());
 }
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 获取文章详情
+ * PeachtreesCMS API - Get Post Details
  * GET /api/posts/view.php?id=1
  */
 
@@ -8,25 +8,25 @@ require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 
-// 只接受 GET 请求
+// Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     error('Method not allowed', 405);
 }
 
-// 获取文章标识（可以是slug或id）
+// Get post identifier (can be slug or id)
 $identifier = $_GET['id'] ?? $_GET['slug'] ?? '';
 
 if (empty($identifier)) {
-    error('文章标识无效');
+    error('Invalid post identifier');
 }
 
 try {
     $pdo = getDB();
 
-    // 判断是数字ID还是slug
+    // Determine if it's a numeric ID or slug
     $isNumericId = is_numeric($identifier);
 
-    // 获取当前文章 - 使用OR条件同时匹配id和slug
+    // Get current post - use OR condition to match both id and slug
     if ($isNumericId) {
         $sql = "SELECT p.id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
                 t.display_name
@@ -47,30 +47,30 @@ try {
     $post = $stmt->fetch();
 
     if (!$post) {
-        notFound('文章不存在');
+        notFound('Post not found');
     }
 
-    // 检查文章是否已发布
+    // Check if post is published
     if ($post['active'] != 1) {
-        notFound('文章不存在');
+        notFound('Post not found');
     }
 
     $coverMedia = json_decode($post['cover_media'] ?? '[]', true);
     $coverMedia = is_array($coverMedia) ? $coverMedia : [];
     $post['cover_media'] = array_map(function ($path) {
         if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
-            return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+            return 'pt_upload/media/' . substr($path, strlen('upload/bigpicture/'));
         }
         return $path;
     }, $coverMedia);
 
-    // 获取上一篇文章（ID更小的最近一篇，且已发布）
+    // Get previous post (most recent post with smaller ID that is published)
     $prevSql = "SELECT id, title, slug FROM pt_posts WHERE id < ? AND active = 1 ORDER BY id DESC LIMIT 1";
     $prevStmt = $pdo->prepare($prevSql);
     $prevStmt->execute([$post['id']]);
     $post['prev_post'] = $prevStmt->fetch();
 
-    // 获取下一篇文章（ID更大的最近一篇，且已发布）
+    // Get next post (most recent post with larger ID that is published)
     $nextSql = "SELECT id, title, slug FROM pt_posts WHERE id > ? AND active = 1 ORDER BY id ASC LIMIT 1";
     $nextStmt = $pdo->prepare($nextSql);
     $nextStmt->execute([$post['id']]);
@@ -79,5 +79,5 @@ try {
     success($post);
 
 } catch (PDOException $e) {
-    serverError('获取文章失败: ' . $e->getMessage());
+    serverError('Failed to get post: ' . $e->getMessage());
 }

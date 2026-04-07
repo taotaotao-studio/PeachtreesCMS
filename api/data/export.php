@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 导出文章数据为 WordPress WXR 风格 XML
+ * PeachtreesCMS API - Export Posts as WordPress WXR XML
  * GET /api/data/export.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -10,7 +10,7 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 防止警告/提示污染 XML 输出
+// Prevent warnings/notices from polluting XML output
 ini_set('display_errors', '0');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -45,7 +45,7 @@ function rewriteMediaUrls(?string $content): string {
     $content = $content ?? '';
     return preg_replace(
         '#https?://localhost/wordpress/wp-content/uploads/([0-9]{4}/[0-9]{2}/[^"\']+)#i',
-        '/upload/media/$1',
+        '/pt_upload/media/$1',
         $content
     );
 }
@@ -212,5 +212,5 @@ try {
     echo $dom->saveXML();
     exit;
 } catch (PDOException $e) {
-    serverError('导出文章数据失败: ' . $e->getMessage());
+    serverError('Export failed: ' . $e->getMessage());
 }

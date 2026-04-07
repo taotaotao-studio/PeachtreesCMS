@@ -89,13 +89,13 @@ function normalizePageLayout(mixed $inputPage, array $defaultPage, string $pageT
         $footer = $defaultPage['footer'];
     }
 
-    // 处理不同模板的块配置
+    // Handle block configuration for different templates
     $defaultLeftSidebarBlocks = $defaultPage['left_sidebar_blocks'] ?? $defaultPage['sidebar_blocks'] ?? [];
     $defaultMainBlocks = $defaultPage['main_blocks'] ?? ($pageType === 'home' ? ['post_list', 'pager'] : ['post_content', 'comments', 'back_link']);
     $defaultRightSidebarBlocks = $defaultPage['right_sidebar_blocks'] ?? [];
     $mainAllowed = $pageType === 'home' ? $allowedHomeMainBlocks : $allowedPostMainBlocks;
 
-    // 优先使用 left_sidebar_blocks，如果不存在则使用 sidebar_blocks
+    // Prefer left_sidebar_blocks, fallback to sidebar_blocks
     $inputLeftSidebarBlocks = $inputPage['left_sidebar_blocks'] ?? null;
     if ($inputLeftSidebarBlocks === null) {
         $inputLeftSidebarBlocks = $inputPage['sidebar_blocks'] ?? null;
@@ -122,15 +122,15 @@ function loadThemeLayout(string $slug, ?array $userLayoutConfig = null): array {
         return $systemDefaults;
     }
 
-    // 1. 使用系统默认布局
+    // 1. Use system default layout
     $fileDefaults = $systemDefaults;
-    // 主题布局不再依赖 layout.json/theme.json
+    // Theme layout no longer depends on layout.json/theme.json
     if ($slug === 'peachtrees-two-column') {
         $fileDefaults['home']['template'] = 'two-column';
         $fileDefaults['post']['template'] = 'two-column';
     }
 
-    // 2. 如果没有用户自定义配置，直接返回文件布局
+    // 2. If no user config, return file defaults
     if (!is_array($userLayoutConfig)) {
         if ($slug === 'peachtrees-two-column') {
             $fileDefaults['home']['template'] = 'two-column';
@@ -139,11 +139,11 @@ function loadThemeLayout(string $slug, ?array $userLayoutConfig = null): array {
         return $fileDefaults;
     }
 
-    // 3. 应用用户自定义配置，以文件布局作为 fallback
+    // 3. Apply user config, using file defaults as fallback
     $homeLayout = $userLayoutConfig['home'] ?? [];
     $postLayout = $postLayout = $userLayoutConfig['post'] ?? [];
 
-    // 处理旧数据结构
+    // Handle legacy data structure
     if (isset($homeLayout['sidebar_blocks']) && !isset($homeLayout['left_sidebar_blocks'])) {
         $homeLayout['left_sidebar_blocks'] = $homeLayout['sidebar_blocks'];
     }
@@ -201,7 +201,7 @@ function scanThemePackages(PDO $pdo): void {
         }
 
         if (!is_file($themeDir . '/' . $meta['entry_css'])) {
-            // 没有入口CSS则跳过该主题包
+            // Skip theme package if no entry CSS
             continue;
         }
 
@@ -229,7 +229,7 @@ function scanThemePackages(PDO $pdo): void {
         ]);
     }
 
-    // 确保始终有且仅有一个激活主题
+    // Ensure exactly one active theme
     $activeStmt = $pdo->query("SELECT id, slug FROM pt_themes WHERE is_active = 1 ORDER BY id ASC");
     $activeRows = $activeStmt ? $activeStmt->fetchAll() : [];
 

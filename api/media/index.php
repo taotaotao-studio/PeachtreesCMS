@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 媒体库列表
+ * PeachtreesCMS API - Media Library List
  * GET /api/media/index.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -45,7 +45,7 @@ foreach ($iterator as $file) {
     $type = in_array($ext, $imageExts, true) ? 'image' : (in_array($ext, $videoExts, true) ? 'video' : 'audio');
 
     $files[] = [
-        'path' => 'upload/' . $relativePath,
+        'path' => 'pt_upload/' . $relativePath,
         'url' => rtrim(UPLOAD_URL, '/') . '/' . $relativePath,
         'type' => $type,
         'size' => $file->getSize(),

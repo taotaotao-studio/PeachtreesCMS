@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 获取网站设置
+ * PeachtreesCMS API - Get Site Settings
  * GET /api/options/index.php
  */
 
@@ -24,5 +24,5 @@ try {
     
     success($options);
 } catch (PDOException $e) {
-    serverError('获取设置失败: ' . $e->getMessage());
+    serverError('Failed to get settings: ' . $e->getMessage());
 }

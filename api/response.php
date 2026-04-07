@@ -1,12 +1,12 @@
 <?php
 /**
- * PeachtreesCMS API - 统一响应处理
+ * PeachtreesCMS API - Unified Response Handler
  */
 
 /**
- * 返回 JSON 响应
- * @param mixed $data 响应数据
- * @param int $status HTTP 状态码
+ * Return JSON response
+ * @param mixed $data Response data
+ * @param int $status HTTP status code
  */
 function jsonResponse(mixed $data, int $status = 200): never {
     http_response_code($status);
@@ -16,9 +16,9 @@ function jsonResponse(mixed $data, int $status = 200): never {
 }
 
 /**
- * 成功响应
- * @param mixed $data 数据
- * @param string $message 消息
+ * Success response
+ * @param mixed $data Data
+ * @param string $message Message
  */
 function success(mixed $data = null, string $message = 'Success'): never {
     jsonResponse([
@@ -29,9 +29,9 @@ function success(mixed $data = null, string $message = 'Success'): never {
 }
 
 /**
- * 错误响应
- * @param string $message 错误消息
- * @param int $status HTTP 状态码
+ * Error response
+ * @param string $message Error message
+ * @param int $status HTTP status code
  */
 function error(string $message = 'Error', int $status = 400): never {
     jsonResponse([
@@ -42,39 +42,39 @@ function error(string $message = 'Error', int $status = 400): never {
 }
 
 /**
- * 未授权响应
- * @param string $message 消息
+ * Unauthorized response
+ * @param string $message Message
  */
 function unauthorized(string $message = 'Unauthorized'): never {
     error($message, 401);
 }
 
 /**
- * 禁止访问响应
- * @param string $message 消息
+ * Forbidden response
+ * @param string $message Message
  */
 function forbidden(string $message = 'Forbidden'): never {
     error($message, 403);
 }
 
 /**
- * 未找到响应
- * @param string $message 消息
+ * Not found response
+ * @param string $message Message
  */
 function notFound(string $message = 'Not Found'): never {
     error($message, 404);
 }
 
 /**
- * 服务器错误响应
- * @param string $message 消息
+ * Server error response
+ * @param string $message Message
  */
 function serverError(string $message = 'Internal Server Error'): never {
     error($message, 500);
 }
 
 /**
- * 获取 JSON 请求体
+ * Get JSON request body
  * @return array|null
  */
 function getJsonInput(): ?array {
@@ -83,22 +83,22 @@ function getJsonInput(): ?array {
 }
 
 /**
- * 获取请求参数 (支持 JSON body 和 GET/POST)
- * @param string $key 参数名
- * @param mixed $default 默认值
+ * Get request parameter (supports JSON body and GET/POST)
+ * @param string $key Parameter name
+ * @param mixed $default Default value
  * @return mixed
  */
 function getParam(string $key, mixed $default = null): mixed {
-    // 优先从 JSON body 获取
+    // First try JSON body
     $json = getJsonInput();
     if (isset($json[$key])) {
         return $json[$key];
     }
-    // 其次从 GET 获取
+    // Then try GET
     if (isset($_GET[$key])) {
         return $_GET[$key];
     }
-    // 最后从 POST 获取
+    // Finally try POST
     if (isset($_POST[$key])) {
         return $_POST[$key];
     }

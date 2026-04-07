@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 删除媒体文件
+ * PeachtreesCMS API - Delete Media File
  * DELETE /api/media/delete.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -19,34 +19,34 @@ requireAdmin();
 $input = getJsonInput();
 $path = $input['path'] ?? '';
 if (!is_string($path) || trim($path) === '') {
-    error('缺少文件路径');
+    error('Missing file path');
 }
 
 $path = ltrim(trim($path), '/');
-if (str_starts_with($path, 'upload/')) {
-    $path = substr($path, 7);
+if (str_starts_with($path, 'pt_upload/')) {
+    $path = substr($path, 10);
 }
 
 if (!str_starts_with($path, 'media/')) {
-    error('仅允许删除 media 目录下的文件');
+    error('Can only delete files in media directory');
 }
 
 $fullPath = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
 $realPath = realpath($fullPath);
 $uploadRoot = realpath(UPLOAD_DIR);
 if ($realPath === false || $uploadRoot === false || strpos($realPath, $uploadRoot) !== 0) {
-    error('文件路径无效');
+    error('Invalid file path');
 }
 
 if (!is_file($realPath)) {
-    error('文件不存在');
+    error('File not found');
 }
 
 if (!@unlink($realPath)) {
-    serverError('删除失败');
+    serverError('Failed to delete');
 }
 
-// 清理空目录（最多向上清理到 media 目录）
+// Clean up empty directories (up to media directory)
 $currentDir = dirname($realPath);
 $mediaRoot = realpath(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'media');
 while ($mediaRoot && strpos($currentDir, $mediaRoot) === 0 && $currentDir !== $mediaRoot) {
@@ -60,5 +60,5 @@ while ($mediaRoot && strpos($currentDir, $mediaRoot) === 0 && $currentDir !== $m
 }
 
 success([
-    'path' => 'upload/' . str_replace('\\', '/', $path)
-], '删除成功');
+    'path' => 'pt_upload/' . str_replace('\\', '/', $path)
+], 'Deleted successfully');

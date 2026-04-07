@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 留言白名单列表
+ * PeachtreesCMS API - Comment Whitelist List
  * GET /api/comments/whitelist.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -85,8 +85,8 @@ try {
             'total' => $total,
             'total_pages' => max(1, intval(ceil($total / $pageSize))),
         ]
-    ], '获取白名单成功');
+    ], 'Whitelist retrieved successfully');
 } catch (PDOException $e) {
-    serverError('获取白名单失败: ' . $e->getMessage());
+    serverError('Failed to get whitelist: ' . $e->getMessage());
 }
 

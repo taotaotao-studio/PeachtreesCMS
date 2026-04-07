@@ -1,8 +1,8 @@
 <?php
 /**
- * PeachtreesCMS API - 获取静态导出进度
+ * PeachtreesCMS API - Get Static Export Progress
  * GET /api/data/export-static-status.php
- * 需要管理员权限
+ * Requires admin privileges
  */
 
 require_once __DIR__ . '/../cors.php';

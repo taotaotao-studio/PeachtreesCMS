@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 检查登录状态
+ * PeachtreesCMS API - Check Login Status
  * GET /api/auth/check.php
  */
 
@@ -9,7 +9,7 @@ require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 require_once __DIR__ . '/../auth.php';
 
-// 只接受 GET 请求
+// Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     error('Method not allowed', 405);
 }

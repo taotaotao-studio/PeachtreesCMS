@@ -1,11 +1,11 @@
 <?php
 /**
- * PeachtreesCMS API - 数据库配置
- * 使用 PDO 连接 MySQL
- * 敏感信息从 .env 文件读取
+ * PeachtreesCMS API - Database Configuration
+ * Uses PDO to connect to MySQL
+ * Sensitive information is read from .env file
  */
 
-// 加载环境变量函数
+// Load environment variables from .env file
 function loadEnv($file) {
     if (!file_exists($file)) {
         return false;
@@ -13,24 +13,24 @@ function loadEnv($file) {
     
     $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        // 跳过注释行
+        // Skip comment lines
         if (strpos(trim($line), '#') === 0) {
             continue;
         }
         
-        // 解析 KEY=VALUE
+        // Parse KEY=VALUE
         if (strpos($line, '=') !== false) {
             list($key, $value) = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value);
             
-            // 移除可能的引号
+            // Remove surrounding quotes
             if ((strpos($value, '"') === 0 && strrpos($value, '"') === strlen($value) - 1) ||
                 (strpos($value, "'") === 0 && strrpos($value, "'") === strlen($value) - 1)) {
                 $value = substr($value, 1, -1);
             }
             
-            // 设置到 $_ENV 和 putenv
+            // Set to $_ENV and putenv
             $_ENV[$key] = $value;
             putenv("$key=$value");
         }
@@ -38,39 +38,54 @@ function loadEnv($file) {
     return true;
 }
 
-// 加载 .env 文件
+// Load .env file
 $envFile = __DIR__ . '/.env';
 if (!loadEnv($envFile)) {
-    // 如果 .env 不存在，尝试加载 .env.local（本地开发）
+    // If .env doesn't exist, try .env.local (for local development)
     $envLocalFile = __DIR__ . '/.env.local';
     if (!loadEnv($envLocalFile)) {
         http_response_code(500);
         header('Content-Type: application/json');
-        echo json_encode(['error' => '配置文件缺失：请创建 api/.env 文件']);
+        echo json_encode(['error' => 'Config file missing: please create api/.env']);
         exit;
     }
 }
 
-// 环境模式
-$appEnv = $_ENV['APP_ENV'] ?? 'development';
-$isProduction = $appEnv === 'production';
+// Database configuration (must be read from .env)
+$requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'];
+$missingVars = [];
+foreach ($requiredEnvVars as $var) {
+    if (!isset($_ENV[$var]) || $_ENV[$var] === '') {
+        $missingVars[] = $var;
+    }
+}
+if (!empty($missingVars)) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Missing required config: ' . implode(', ', $missingVars) . ', please configure in api/.env']);
+    exit;
+}
 
-// 数据库配置
-define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
-define('DB_NAME', $_ENV['DB_NAME'] ?? 'peachtrees');
-define('DB_USER', $_ENV['DB_USER'] ?? 'root');
-define('DB_PASS', $_ENV['DB_PASS'] ?? '');
-define('DB_CHARSET', $_ENV['DB_CHARSET'] ?? 'utf8mb4');
+define('DB_HOST', $_ENV['DB_HOST']);
+define('DB_NAME', $_ENV['DB_NAME']);
+define('DB_USER', $_ENV['DB_USER']);
+define('DB_PASS', $_ENV['DB_PASS']);
+define('DB_CHARSET', 'utf8mb4');
 
-// JWT 配置
-define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? 'default_secret_change_in_production');
-define('JWT_EXPIRE', intval($_ENV['JWT_EXPIRE'] ?? 86400));
+// JWT configuration
+if (!isset($_ENV['JWT_SECRET']) || $_ENV['JWT_SECRET'] === '') {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Missing required config: JWT_SECRET, please configure in api/.env']);
+    exit;
+}
+define('JWT_SECRET', $_ENV['JWT_SECRET']);
+define('JWT_EXPIRE', 86400);
 
-// 时区设置
-$timezone = $_ENV['TIMEZONE'] ?? 'Asia/Shanghai';
-date_default_timezone_set($timezone);
+// Timezone setting
+date_default_timezone_set('Asia/Shanghai');
 
-// 强制输出编码为 UTF-8，避免出现 UTF-16/UTF-32 输出导致的 0x00 字节
+// Force output encoding to UTF-8, avoid 0x00 bytes from UTF-16/UTF-32 output
 ini_set('default_charset', 'UTF-8');
 if (function_exists('mb_internal_encoding')) {
     mb_internal_encoding('UTF-8');
@@ -82,32 +97,25 @@ if (function_exists('mb_regex_encoding')) {
     mb_regex_encoding('UTF-8');
 }
 ini_set('mbstring.encoding_translation', '0');
-// mbstring.http_output 已废弃（PHP 8.2+），避免触发 Deprecated 输出
+// mbstring.http_output is deprecated (PHP 8.2+), avoid triggering Deprecated output
 ini_set('mbstring.func_overload', '0');
 ini_set('output_handler', '');
 ini_set('zlib.output_compression', '0');
 
-// 错误报告配置
-if ($isProduction) {
-    error_reporting(E_ALL);
-    ini_set('display_errors', '0');
-    ini_set('log_errors', '1');
-    ini_set('error_log', '/var/log/php/peachtreescms-error.log');
-} else {
-    error_reporting(E_ALL);
-    ini_set('display_errors', '1');
-}
+// Upload directory configuration (read from .env, supports user customization)
+$uploadDir = $_ENV['UPLOAD_DIR'] ?? '';
 
-// 上传目录配置
-if ($isProduction) {
-    define('UPLOAD_DIR', '/var/www/html/upload/');
-    define('UPLOAD_URL', '/upload/');
+if (!empty($uploadDir)) {
+    // User defined upload directory, ensure it ends with slash
+    $uploadDir = rtrim($uploadDir, '/\\') . '/';
 } else {
-    define('UPLOAD_DIR', __DIR__ . '/../upload/');
-    define('UPLOAD_URL', '/upload/');
+    // Default path: use pt_upload/ under project root
+    $uploadDir = __DIR__ . '/../pt_upload/';
 }
+define('UPLOAD_DIR', $uploadDir);
+define('UPLOAD_URL', '/pt_upload/');  // URL access path is fixed
 
-// 创建 PDO 连接
+// Create PDO connection
 function getDB(): PDO {
     static $pdo = null;
     if ($pdo === null) {
@@ -129,7 +137,7 @@ function getDB(): PDO {
     return $pdo;
 }
 
-// 启动 Session
+// Start Session
 if (session_status() === PHP_SESSION_NONE) {
     $sessionPath = __DIR__ . '/sessions';
     if (!is_dir($sessionPath)) {

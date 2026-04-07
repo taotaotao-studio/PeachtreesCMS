@@ -1,6 +1,6 @@
 <?php
 /**
- * PeachtreesCMS API - 创建评论
+ * PeachtreesCMS API - Create Comment
  * POST /api/comments/create.php
  */
 
@@ -8,12 +8,12 @@ require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
 
-// 只接受 POST 请求
+// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-// 获取请求参数
+// Get request parameters
 $input = getJsonInput();
 $postId = intval($input['post_id'] ?? 0);
 $email = trim($input['email'] ?? '');
@@ -23,86 +23,86 @@ $website = trim($input['website'] ?? '');
 $parentId = intval($input['parent_id'] ?? 0);
 $captcha = trim($input['captcha'] ?? '');
 
-// 验证输入
+// Validate input
 if ($postId <= 0) {
-    error('文章ID无效');
+    error('Invalid post ID');
 }
 
 if (empty($email)) {
-    error('邮箱不能为空');
+    error('Email cannot be empty');
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    error('邮箱格式不正确');
+    error('Invalid email format');
 }
 
 if (empty($nickname)) {
-    error('昵称不能为空');
+    error('Nickname cannot be empty');
 }
 
 if (empty($content)) {
-    error('评论内容不能为空');
+    error('Comment content cannot be empty');
 }
 
 if (strlen($content) > 1000) {
-    error('评论内容不能超过1000字');
+    error('Comment content cannot exceed 1000 characters');
 }
 
-// 验证验证码
+// Verify captcha
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 if (!isset($_SESSION['captcha']) || strtoupper($captcha) !== strtoupper($_SESSION['captcha'])) {
-    error('验证码错误');
+    error('Invalid captcha');
 }
-unset($_SESSION['captcha']); // 验证后删除验证码
+unset($_SESSION['captcha']); // Delete captcha after verification
 
 try {
     $pdo = getDB();
     
-    // 检查文章是否存在且允许评论
+    // Check if post exists and allows comments
     $postStmt = $pdo->prepare("SELECT id, allow_comments FROM pt_posts WHERE id = ?");
     $postStmt->execute([$postId]);
     $post = $postStmt->fetch();
     
     if (!$post) {
-        notFound('文章不存在');
+        notFound('Post not found');
     }
     
     if ($post['allow_comments'] != 1) {
-        error('该文章不允许评论');
+        error('This post does not allow comments');
     }
     
-    // 如果有父评论，验证父评论是否存在
+    // If there's a parent comment, verify it exists
     if ($parentId > 0) {
         $parentStmt = $pdo->prepare("SELECT id FROM pt_comments WHERE id = ? AND post_id = ?");
         $parentStmt->execute([$parentId, $postId]);
         if (!$parentStmt->fetch()) {
-            error('父评论不存在');
+            error('Parent comment not found');
         }
     }
     
-    // 查找或创建评论用户
+    // Find or create comment user
     $userStmt = $pdo->prepare("SELECT id FROM pt_comment_users WHERE email = ?");
     $userStmt->execute([$email]);
     $user = $userStmt->fetch();
     
     if ($user) {
         $userId = $user['id'];
-        // 更新用户信息
+        // Update user info
         $updateUserStmt = $pdo->prepare("UPDATE pt_comment_users SET nickname = ?, website = ? WHERE id = ?");
         $updateUserStmt->execute([$nickname, $website, $userId]);
     } else {
-        // 创建新用户
+        // Create new user
         $insertUserStmt = $pdo->prepare("INSERT INTO pt_comment_users (email, nickname, website, created_at) VALUES (?, ?, ?, NOW())");
         $insertUserStmt->execute([$email, $nickname, $website]);
         $userId = $pdo->lastInsertId();
     }
     
-    // 根据白名单决定评论状态
-    // 默认待审核(0)；trusted 自动通过(1)；blocked 直接拒绝
+    // Determine comment status based on whitelist
+    // Default pending review(0); trusted auto-approve(1); blocked directly reject
     $commentStatus = 0;
-    $successMessage = '评论提交成功，等待审核';
+    $successMessage = 'Comment submitted successfully, pending review';
     try {
         $whitelistStmt = $pdo->prepare("
             SELECT status
@@ -116,21 +116,21 @@ try {
 
         if ($whitelist) {
             if ($whitelist['status'] === 'blocked') {
-                error('留言受限，请联系管理员');
+                error('Commenting restricted, please contact administrator');
             }
             if ($whitelist['status'] === 'trusted') {
                 $commentStatus = 1;
-                $successMessage = '评论提交成功';
+                $successMessage = 'Comment submitted successfully';
             }
         }
     } catch (PDOException $e) {
-        // 白名单表不存在或查询失败时，兼容回退到原有待审核逻辑
+        // Whitelist table doesn't exist or query failed, fall back to pending review
     }
 
-    // 获取评论者IP
+    // Get commenter IP
     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
-    // 插入评论
+    // Insert comment
     $sql = "INSERT INTO pt_comments (post_id, user_id, content, status, parent_id, ip, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$postId, $userId, $content, $commentStatus, $parentId > 0 ? $parentId : null, $ip]);
@@ -145,5 +145,5 @@ try {
     ], $successMessage);
     
 } catch (PDOException $e) {
-    serverError('创建评论失败: ' . $e->getMessage());
+    serverError('Failed to create comment: ' . $e->getMessage());
 }
