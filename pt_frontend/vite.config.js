@@ -25,12 +25,6 @@ export default defineConfig(() => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/theme\//, '/PeachtreesCMS/theme/')
       },
-      // 语言包代理：/languages/xxx → http://localhost/PeachtreesCMS/public/languages/xxx
-      '/languages/': {
-        target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/languages\//, '/PeachtreesCMS/languages/')
-      },
       // 页面样式代理：/pattern/xxx → http://localhost/PeachtreesCMS/public/pattern/xxx
       '/pattern/': {
         target: 'http://localhost',

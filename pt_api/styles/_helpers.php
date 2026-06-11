@@ -1,7 +1,7 @@
 <?php
 
 function stylesBaseDir(): string {
-    $dir = defined('STYLE_DIR') ? STYLE_DIR : (__DIR__ . '/../../pt_frontend/public/pattern');
+    $dir = defined('STYLE_DIR') ? STYLE_DIR : (__DIR__ . '/../pattern');
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }

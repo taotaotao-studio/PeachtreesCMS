@@ -10,26 +10,26 @@ function loadEnv($file) {
     if (!file_exists($file)) {
         return false;
     }
-    
+
     $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         // Skip comment lines
         if (strpos(trim($line), '#') === 0) {
             continue;
         }
-        
+
         // Parse KEY=VALUE
         if (strpos($line, '=') !== false) {
             list($key, $value) = explode('=', $line, 2);
             $key = trim($key);
             $value = trim($value);
-            
+
             // Remove surrounding quotes
             if ((strpos($value, '"') === 0 && strrpos($value, '"') === strlen($value) - 1) ||
                 (strpos($value, "'") === 0 && strrpos($value, "'") === strlen($value) - 1)) {
                 $value = substr($value, 1, -1);
             }
-            
+
             // Set to $_ENV and putenv
             $_ENV[$key] = $value;
             putenv("$key=$value");
@@ -124,6 +124,10 @@ define('UPLOAD_DIR', $uploadDir);
 $themeDir = $projectRoot . '/theme';
 define('THEME_DIR', $themeDir);
 
+// Style/pattern directory configuration (pattern/ under project root)
+$styleDir = $projectRoot . '/pattern';
+define('STYLE_DIR', $styleDir);
+
 // Upload URL configuration
 // For shared hosting in subdirectory, set UPLOAD_URL_BASE environment variable
 // Example: /PeachtreesCMS/upload/
@@ -175,13 +179,13 @@ if (session_status() === PHP_SESSION_NONE) {
     if (is_dir($sessionPath)) {
         session_save_path($sessionPath);
     }
-    
+
     // Set secure session cookie parameters
     // secure: true when HTTPS is detected, ensures cookies only sent over HTTPS
     $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
                 (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
                 (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
-    
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
