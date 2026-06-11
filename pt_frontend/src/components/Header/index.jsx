@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../contexts/ThemeContext'
+import { toAbsolutePath } from '../../utils/path'
 
 export default function Header() {
   const { siteOptions } = useTheme()
@@ -9,7 +10,7 @@ export default function Header() {
       <h1>
         <NavLink to="/" className="header-link">
           {siteOptions.show_logo ? (
-            <img src="/theme/default/logo.png" alt={siteOptions.site_title} />
+            <img src={toAbsolutePath('/theme/default/logo.png')} alt={siteOptions.site_title} />
           ) : (
             siteOptions.site_title
           )}

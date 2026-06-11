@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useTheme } from './ThemeContext'
+import { toAbsolutePath } from '../utils/path'
 
 const LanguageContext = createContext(null)
 
@@ -13,7 +14,7 @@ export function LanguageProvider({ children }) {
 
   const loadLanguage = useCallback(async (langCode) => {
     try {
-      const response = await fetch(`/languages/${langCode}.json`)
+      const response = await fetch(toAbsolutePath(`/languages/${langCode}.json`))
       if (!response.ok) throw new Error(`Failed to load ${langCode}`)
       const data = await response.json()
       setTranslations(prev => ({ ...prev, [langCode]: data }))

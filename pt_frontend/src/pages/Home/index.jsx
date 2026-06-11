@@ -8,6 +8,7 @@ import CategoryNav from '../../components/CategoryNav'
 import Footer from '../../components/Footer'
 import Pager from '../../components/Pager'
 import { getLayoutComponent } from '../../layouts'
+import { toAbsolutePath } from '../../utils/path'
 
 export default function Home() {
   const [posts, setPosts] = useState([])
@@ -36,7 +37,7 @@ export default function Home() {
     if (tag && posts.length > 0 && posts[0].tag_page_style) {
       const link = document.createElement('link')
       link.rel = 'stylesheet'
-      link.href = `/pattern/${posts[0].tag_page_style}/style.css`
+      link.href = toAbsolutePath(`/pattern/${posts[0].tag_page_style}/style.css`)
       link.id = 'tag-pattern-css'
       document.head.appendChild(link)
     }

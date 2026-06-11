@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { themesAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { toAbsolutePath } from '../../utils/path'
 
 const THUMBNAIL_FILES = ['thumbnail.svg', 'thumbnail.webp', 'thumbnail.png', 'thumbnail.jpg', 'thumbnail.jpeg', 'thumbnail.gif']
 
@@ -9,7 +10,7 @@ function ThemeThumbnail({ slug, name, thumbnail }) {
   const candidates = [
     thumbnail,
     ...THUMBNAIL_FILES.filter(f => f !== thumbnail)
-  ].filter(Boolean).map((file) => `/theme/${encodeURIComponent(slug)}/${file}`)
+  ].filter(Boolean).map((file) => toAbsolutePath(`/theme/${encodeURIComponent(slug)}/${file}`))
   const [index, setIndex] = useState(0)
   const [error, setError] = useState(false)
 
