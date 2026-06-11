@@ -85,7 +85,7 @@ try {
 
     if (!is_dir($absoluteDir)) {
         if (!is_dir($uploadRoot) || !is_writable($uploadRoot)) {
-            serverError('Upload directory not writable, check pt_upload permissions: ' . $uploadRoot);
+            serverError('Upload directory not writable, check upload permissions: ' . $uploadRoot);
         }
         if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
             serverError('Failed to create upload directory: ' . $absoluteDir);

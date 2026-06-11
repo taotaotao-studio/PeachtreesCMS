@@ -115,28 +115,18 @@ if (!empty($uploadDir)) {
     }
     $uploadDir .= '/';
 } else {
-    // Default path: use pt_upload/ under project root
-    $uploadDir = $projectRoot . '/pt_upload/';
+    // Default path: use upload/ under project root
+    $uploadDir = $projectRoot . '/upload/';
 }
 define('UPLOAD_DIR', $uploadDir);
 
-// Theme directory configuration (read from .env, fallback to /theme under project root)
-// Supports absolute or relative paths (relative to project root).
-$themeDir = $_ENV['THEME_DIR'] ?? '';
-if (!empty($themeDir)) {
-    $themeDir = rtrim($themeDir, '/\\');
-    // Resolve relative path against project root
-    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $themeDir)) {
-        $themeDir = $projectRoot . '/' . $themeDir;
-    }
-} else {
-    $themeDir = $projectRoot . '/theme';
-}
+// Theme directory configuration (theme/ under project root)
+$themeDir = $projectRoot . '/theme';
 define('THEME_DIR', $themeDir);
 
 // Upload URL configuration
 // For shared hosting in subdirectory, set UPLOAD_URL_BASE environment variable
-// Example: /PeachtreesCMS/pt_upload/
+// Example: /PeachtreesCMS/upload/
 $uploadUrlBase = $_ENV['UPLOAD_URL_BASE'] ?? '';
 if (!empty($uploadUrlBase)) {
     // Use custom URL base from environment
@@ -148,9 +138,9 @@ if (!empty($uploadUrlBase)) {
     // Example: /PeachtreesCMS/pt_api/media => /PeachtreesCMS
     $baseDir = preg_replace('#/pt_api(/.*)?$#i', '', $scriptDir);
     if ($baseDir === '' || $baseDir === '/') {
-        define('UPLOAD_URL', '/pt_upload/');
+        define('UPLOAD_URL', '/upload/');
     } else {
-        define('UPLOAD_URL', rtrim($baseDir, '/') . '/pt_upload/');
+        define('UPLOAD_URL', rtrim($baseDir, '/') . '/upload/');
     }
 }
 

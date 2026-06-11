@@ -22,6 +22,7 @@ requireAuth();
 $input = getJsonInput();
 $tag = trim($input['tag'] ?? '');
 $tagLocal = trim($input['display_name'] ?? '');
+$pageStyle = trim($input['page_style'] ?? '');
 
 // Validate input
 if (empty($tag)) {
@@ -48,9 +49,9 @@ try {
     }
     
     // Insert tag
-    $sql = "INSERT INTO pt_tags (tag, display_name, post_count) VALUES (?, ?, 0)";
+    $sql = "INSERT INTO pt_tags (tag, display_name, page_style, post_count) VALUES (?, ?, ?, 0)";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$tag, $tagLocal]);
+    $stmt->execute([$tag, $tagLocal, $pageStyle !== '' ? $pageStyle : null]);
     
     $tagId = $pdo->lastInsertId();
     
@@ -58,6 +59,7 @@ try {
         'id' => $tagId,
         'tag' => $tag,
         'display_name' => $tagLocal,
+        'page_style' => $pageStyle !== '' ? $pageStyle : null,
         'post_count' => 0
     ], 'Tag created successfully');
     

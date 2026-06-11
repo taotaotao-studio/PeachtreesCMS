@@ -1,7 +1,7 @@
 <?php
 
 function themesBaseDir(): string {
-    $dir = defined('THEME_DIR') ? THEME_DIR : (__DIR__ . '/../../public/theme');
+    $dir = defined('THEME_DIR') ? THEME_DIR : (__DIR__ . '/../theme');
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
@@ -30,7 +30,6 @@ function scanThemePackages(PDO $pdo): void {
         }
 
         $meta = [
-            'name' => $slug,
             'description' => null,
             'version' => null,
             'author' => null,
@@ -42,7 +41,6 @@ function scanThemePackages(PDO $pdo): void {
         if (is_file($metaFile)) {
             $decoded = json_decode(file_get_contents($metaFile), true);
             if (is_array($decoded)) {
-                $meta['name'] = trim($decoded['name'] ?? $meta['name']) ?: $meta['name'];
                 $meta['description'] = trim($decoded['description'] ?? '') ?: null;
                 $meta['version'] = trim($decoded['version'] ?? '') ?: null;
                 $meta['author'] = trim($decoded['author'] ?? '') ?: null;
@@ -55,26 +53,21 @@ function scanThemePackages(PDO $pdo): void {
         }
 
         if (!is_file($themeDir . '/' . $meta['entry_css'])) {
-            // Skip theme package if no entry CSS
             continue;
         }
 
         $upsert = $pdo->prepare("
-            INSERT INTO pt_themes (slug, name, description, version, author, entry_css, thumbnail, is_active, created_at, updated_at, last_scanned_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW(), NOW(), NOW())
+            INSERT INTO pt_themes (slug, description, version, author, entry_css, thumbnail, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, 0)
             ON DUPLICATE KEY UPDATE
-                name = VALUES(name),
                 description = VALUES(description),
                 version = VALUES(version),
                 author = VALUES(author),
                 entry_css = VALUES(entry_css),
-                thumbnail = VALUES(thumbnail),
-                updated_at = NOW(),
-                last_scanned_at = NOW()
+                thumbnail = VALUES(thumbnail)
         ");
         $upsert->execute([
             $slug,
-            $meta['name'],
             $meta['description'],
             $meta['version'],
             $meta['author'],
@@ -98,12 +91,12 @@ function scanThemePackages(PDO $pdo): void {
         }
 
         if ($fallback) {
-            $setActive = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+            $setActive = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END");
             $setActive->execute([intval($fallback['id'])]);
         }
     } elseif (count($activeRows) > 1) {
         $keepId = intval($activeRows[0]['id']);
-        $setOnlyOne = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+        $setOnlyOne = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END");
         $setOnlyOne->execute([$keepId]);
     }
 }

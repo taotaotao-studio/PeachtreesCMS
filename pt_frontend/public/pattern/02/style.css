@@ -1,0 +1,25 @@
+/* Pattern 02 - Warm Sunset */
+body {
+  background-color: #333;
+}
+
+.article-detail {
+  color: #ffffff;
+  background-color: #333;
+}
+
+.comments {
+	color: #ffffff;
+    background-color: #333;
+}
+
+.comment-card {
+    background: #666;
+}
+
+.comment-date {color: #999;}
+
+.comment-reply-btn {
+    color: #999;
+	text-decoration: underline;
+}

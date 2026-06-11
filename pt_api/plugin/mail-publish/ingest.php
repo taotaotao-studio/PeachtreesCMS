@@ -156,7 +156,7 @@ if (!empty($_FILES)) {
 
         if (!is_dir($absoluteDir)) {
             if (!is_dir($uploadRoot) || !is_writable($uploadRoot)) {
-                serverError('Upload directory not writable, check pt_upload permissions: ' . $uploadRoot);
+                serverError('Upload directory not writable, check upload permissions: ' . $uploadRoot);
             }
             if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
                 serverError('Failed to create upload directory: ' . $absoluteDir);
@@ -166,7 +166,7 @@ if (!empty($_FILES)) {
         $ext = $allowedMimeToExt[$mime];
         $hash = bin2hex(random_bytes(8));
         $filename = "{$day}-{$hash}.{$ext}";
-        $relativePath = "pt_upload/{$relativeDir}/{$filename}";
+        $relativePath = "upload/{$relativeDir}/{$filename}";
         $absolutePath = UPLOAD_DIR . "{$relativeDir}/{$filename}";
 
         if (!move_uploaded_file($file['tmp_name'], $absolutePath)) {

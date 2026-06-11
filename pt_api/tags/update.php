@@ -23,6 +23,7 @@ $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 $tag = trim($input['tag'] ?? '');
 $tagLocal = trim($input['display_name'] ?? '');
+$pageStyle = isset($input['page_style']) ? trim($input['page_style']) : null;
 
 // Validate input
 if ($id <= 0) {
@@ -68,8 +69,8 @@ try {
     
     try {
         // Update tag
-        $updateStmt = $pdo->prepare("UPDATE pt_tags SET tag = ?, display_name = ? WHERE id = ?");
-        $updateStmt->execute([$tag, $tagLocal, $id]);
+        $updateStmt = $pdo->prepare("UPDATE pt_tags SET tag = ?, display_name = ?, page_style = ? WHERE id = ?");
+        $updateStmt->execute([$tag, $tagLocal, $pageStyle !== null ? $pageStyle : null, $id]);
         
         // If slug changed, update posts table
         if ($oldTagName !== $tag) {
@@ -82,7 +83,8 @@ try {
         success([
             'id' => $id,
             'tag' => $tag,
-            'display_name' => $tagLocal
+            'display_name' => $tagLocal,
+            'page_style' => $pageStyle
         ], 'Tag updated successfully');
         
     } catch (Exception $e) {

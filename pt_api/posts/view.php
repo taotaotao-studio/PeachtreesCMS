@@ -28,16 +28,16 @@ try {
 
     // Get current post - use OR condition to match both id and slug
     if ($isNumericId) {
-        $sql = "SELECT p.id, p.tag, p.post_type, p.page_pattern, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
-                t.display_name
+        $sql = "SELECT p.id, p.tag, p.post_type, p.page_style, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
+                t.display_name, t.page_style as tag_page_style
                 FROM pt_posts p
                 LEFT JOIN pt_tags t ON p.tag = t.tag
                 WHERE p.id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([intval($identifier)]);
     } else {
-        $sql = "SELECT p.id, p.tag, p.post_type, p.page_pattern, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
-                t.display_name
+        $sql = "SELECT p.id, p.tag, p.post_type, p.page_style, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
+                t.display_name, t.page_style as tag_page_style
                 FROM pt_posts p
                 LEFT JOIN pt_tags t ON p.tag = t.tag
                 WHERE p.slug = ?";
@@ -59,7 +59,7 @@ try {
     $coverMedia = is_array($coverMedia) ? $coverMedia : [];
     $post['cover_media'] = array_map(function ($path) {
         if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
-            return 'pt_upload/media/' . substr($path, strlen('upload/bigpicture/'));
+            return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
         }
         return $path;
     }, $coverMedia);

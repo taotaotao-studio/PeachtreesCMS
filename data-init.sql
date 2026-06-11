@@ -104,7 +104,7 @@ CREATE TABLE `pt_posts` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `tag` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `post_type` enum('normal','big-picture') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal' COMMENT '文章类型',
-  `page_pattern` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '页面样式模板',
+  `page_style` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '页面风格',
   `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `slug` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '自定义URL标识',
   `summary` text COLLATE utf8mb4_unicode_ci COMMENT '文章简介（大片文章展示在封面底部）',
@@ -136,6 +136,7 @@ CREATE TABLE `pt_tags` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `tag` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `display_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `page_style` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分类页面风格',
   `post_count` int(11) DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `tag` (`tag`)
@@ -162,8 +163,6 @@ CREATE TABLE `pt_themes` (
   `entry_css` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'style.css' COMMENT '入口CSS文件',
   `thumbnail` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT 'thumbnail.svg' COMMENT '主题缩略图文件名',
   `is_active` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否当前激活',
-  `user_layout_config` json DEFAULT NULL COMMENT '用户自定义布局配置',
-  `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `last_scanned_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -172,9 +171,9 @@ CREATE TABLE `pt_themes` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for `pt_themes` (2 rows)
-INSERT INTO `pt_themes` (`id`, `slug`, `name`, `description`, `version`, `author`, `entry_css`, `thumbnail`, `is_active`, `user_layout_config`, `created_at`, `updated_at`, `last_scanned_at`) VALUES
-('1', 'default', 'Peachtrees Default', 'System Default Theme', '1.0.0', 'PeachtreesCMS', 'style.css', 'thumbnail.svg', '1', NULL, '2026-03-24 17:23:44', '2026-04-09 18:16:01', '2026-04-09 18:16:01'),
-('2', 'peachtrees-two-column', 'Peachtrees Two Column', 'Two Column Theme', '1.0.0', 'PeachtreesCMS', 'style.css', 'thumbnail.svg', '0', NULL, '2026-03-24 17:23:44', '2026-04-09 18:16:01', '2026-04-09 18:16:01');
+INSERT INTO `pt_themes` (`id`, `slug`, `description`, `version`, `author`, `entry_css`, `thumbnail`, `is_active`) VALUES
+('1', 'default', 'System Default Theme', '1.0.0', 'PeachtreesCMS', 'style.css', 'thumbnail.svg', '1'),
+('2', 'peachtrees-two-column', 'Two Column Theme', '1.0.0', 'PeachtreesCMS', 'style.css', 'thumbnail.svg', '0');
 
 
 -- --------------------------------------------------------

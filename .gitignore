@@ -1,5 +1,5 @@
 # Dependencies
-node_modules
+pt_frontend/node_modules
 
 # static files
 static_html/*
@@ -19,7 +19,7 @@ Thumbs.db
 npm-debug.log*
 
 # Upload files (optional, uncomment if needed)
-pt_upload/*
+pt_frontend/public/upload/*
 
 # plan
 .plan
@@ -33,3 +33,6 @@ pt_api/rate_limits/*
 
 # Installation lock file
 pt_api/.installed
+
+# Docker env (contains secrets)
+.env.docker

@@ -36,7 +36,7 @@ try {
     }
 
     $targetId = intval($theme['id']);
-    $updateStmt = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END, updated_at = NOW()");
+    $updateStmt = $pdo->prepare("UPDATE pt_themes SET is_active = CASE WHEN id = ? THEN 1 ELSE 0 END");
     $updateStmt->execute([$targetId]);
 
     success([

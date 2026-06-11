@@ -28,9 +28,7 @@ if (!is_string($path) || trim($path) === '') {
 }
 
 $path = ltrim(trim($path), '/');
-if (str_starts_with($path, 'pt_upload/')) {
-    $path = substr($path, 10);
-} elseif (str_starts_with($path, 'upload/')) {
+if (str_starts_with($path, 'upload/')) {
     $path = substr($path, 7);
 }
 
