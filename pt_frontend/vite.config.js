@@ -7,29 +7,25 @@ export default defineConfig(() => ({
   server: {
     port: 5173,
     proxy: {
-      // API 代理：/pt_api/xxx → http://localhost/PeachtreesCMS/pt_api/xxx
+      // API 代理：/pt_api/xxx → http://localhost/pt_api/xxx
       '/pt_api/': {
         target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pt_api\//, '/PeachtreesCMS/pt_api/')
+        changeOrigin: true
       },
-      // 上传文件代理：/pt_upload/xxx → http://localhost/PeachtreesCMS/pt_upload/xxx
+      // 上传文件代理：/upload/xxx → http://localhost/upload/xxx
       '/upload/': {
         target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/upload\//, '/PeachtreesCMS/upload/')
+        changeOrigin: true
       },
-      // 主题资源代理：/theme/xxx → http://localhost/PeachtreesCMS/public/theme/xxx
+      // 主题资源代理：/theme/xxx → http://localhost/theme/xxx
       '/theme/': {
         target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/theme\//, '/PeachtreesCMS/theme/')
+        changeOrigin: true
       },
-      // 页面样式代理：/pattern/xxx → http://localhost/PeachtreesCMS/public/pattern/xxx
+      // 页面样式代理：/pattern/xxx → http://localhost/pattern/xxx
       '/pattern/': {
         target: 'http://localhost',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/pattern\//, '/PeachtreesCMS/pattern/')
+        changeOrigin: true
       }
     }
   },
