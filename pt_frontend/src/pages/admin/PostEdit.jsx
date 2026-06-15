@@ -2,14 +2,14 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { postsAPI, tagsAPI, stylesAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { toAbsolutePath } from '../../utils/path'
+import { publicUrl } from '../../utils/path'
 
 // 动态导入 Tiptap 编辑器，实现按需加载
 const TiptapEditor = lazy(() => import('../../components/TiptapEditor'))
 
 function toPublicPath(path) {
   if (!path) return ''
-  return toAbsolutePath(path)
+  return publicUrl(path)
 }
 
 function isMp4(path) {

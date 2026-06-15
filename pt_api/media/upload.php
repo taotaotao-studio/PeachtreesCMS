@@ -79,7 +79,7 @@ try {
     $year = date('Y');
     $month = date('m');
     $day = date('d');
-    $relativeDir = "media/{$year}/{$month}";
+    $relativeDir = "{$year}/{$month}";
     $absoluteDir = UPLOAD_DIR . $relativeDir;
     $uploadRoot = UPLOAD_DIR;
 
@@ -120,7 +120,7 @@ try {
         $ext = $allowedMimeToExt[$mime];
         $hash = bin2hex(random_bytes(8));
         $filename = "{$day}-{$hash}.{$ext}";
-        $relativePath = "pt_upload/{$relativeDir}/{$filename}";
+        $relativePath = "upload/{$relativeDir}/{$filename}";
         $absolutePath = UPLOAD_DIR . "{$relativeDir}/{$filename}";
 
         if (!move_uploaded_file($file['tmp_name'], $absolutePath)) {

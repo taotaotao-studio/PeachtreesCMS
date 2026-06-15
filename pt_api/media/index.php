@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 requireAdmin();
 
-$baseDir = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'media';
+$baseDir = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR);
 if (!is_dir($baseDir)) {
     success([
         'files' => []

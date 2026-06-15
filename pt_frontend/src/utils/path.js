@@ -3,7 +3,7 @@
  * @param {string} path - 路径（可以以 / 开头，也可以不以 / 开头）
  * @returns {string} 转换后的路径
  */
-export function toAbsolutePath(path) {
+export function publicUrl(path) {
   const base = import.meta.env.BASE_URL || '/'
   // 去掉 path 开头的 /（如果有）
   const normalizedPath = path.startsWith('/') ? path.slice(1) : path

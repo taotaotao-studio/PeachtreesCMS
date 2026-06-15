@@ -341,6 +341,7 @@ $availableLanguages = getAvailableLanguages();
         <p><?php echo __('install.admin'); ?>: <a href="<?php echo h($baseUrl . '/admin.html#/admin/login'); ?>"><?php echo h($baseUrl . '/admin.html#/admin/login'); ?></a></p>
       </div>
       <p class="alert alert-error"><?php echo __('install.delete_hint'); ?></p>
+      <p class="alert alert-error"><?php echo __('install.env_security_hint'); ?></p>
     <?php endif; ?>
   </div>
   <script>

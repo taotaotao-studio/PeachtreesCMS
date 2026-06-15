@@ -1,4 +1,27 @@
-# PeachtreesCMS Nginx 安全配置示例
+# PeachtreesCMS Nginx 配置示例 — 前后端同目录部署（推荐）
+#
+# 部署结构（所有文件在同一个 root 下）：
+#   /var/www/html/blog/
+#     ├── index.html           ← 前端入口
+#     ├── admin.html           ← 后台入口
+#     ├── assets/              ← Vite 构建产物
+#     ├── pt_api/              ← PHP 后端
+#     ├── upload/              ← 用户上传文件
+#     ├── theme/               ← 主题
+#     ├── pattern/             ← 页面风格
+#     ├── languages/           ← 语言包
+#     └── imgs/                ← 图片资源
+#
+# 此方案只需配置 root + PHP 路径，upload/theme/pattern/languages/imgs
+# 自动与 index.html 同级可访问，无需额外 location。
+#
+# 前端构建配置：
+#   vite.config.js → base: '/blog/'
+#   pt_frontend/.env → VITE_API_BASE_URL=/blog/pt_api/
+#
+# PHP .env 配置（无需额外设置，自动探测）：
+#   UPLOAD_DIR   → 自动为 /var/www/html/blog/upload/
+#   UPLOAD_URL   → 自动为 /blog/upload/
 
 server {
     listen 80;
@@ -19,22 +42,18 @@ server {
         return 404;
     }
 
-    # PHP 处理
-    location ~ ^/pt_api/(.+\.php)$ {
+    # PHP 处理 — pt_api/ 在 web root 下，与 index.html 同级
+    location ~ ^/blog/pt_api/(.+\.php)$ {
         fastcgi_pass unix:/var/run/php/php-fpm.sock;
         index index.php;
-        # windows
+        # Windows 使用 TCP:
         # fastcgi_pass 127.0.0.1:9000;
-        # linux
-        fastcgi_param SCRIPT_FILENAME /var/www/pt_api/$1;
+        fastcgi_param SCRIPT_FILENAME $document_root/blog/pt_api/$1;
         include fastcgi_params;
     }
 
-    # 前端静态资源
-    location / {
-        # try_files $uri $uri/ /index.html;
-        # 对于 Hash 路由，其实只要确保能读到文件即可。
-        # 原配置中的 /index.html 兜底逻辑在 Hash 模式下永远不会触发，但留着也没副作用。
+    # 前端静态资源 + upload/theme/pattern/languages/imgs
+    location /blog/ {
         try_files $uri $uri/ =404;
 
         # 安全响应头

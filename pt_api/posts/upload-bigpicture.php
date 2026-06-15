@@ -93,7 +93,7 @@ try {
     $year = date('Y');
     $month = date('m');
     $day = date('d');
-    $relativeDir = "media/{$year}/{$month}";
+    $relativeDir = "{$year}/{$month}";
     $absoluteDir = UPLOAD_DIR . $relativeDir;
     $uploadRoot = UPLOAD_DIR;
 

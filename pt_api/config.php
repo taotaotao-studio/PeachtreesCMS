@@ -38,50 +38,37 @@ function loadEnv($file) {
     return true;
 }
 
-// Load .env file
-$envFile = __DIR__ . '/.env';
-if (!loadEnv($envFile)) {
-    // If .env doesn't exist, try .env.local (for local development)
-    $envLocalFile = __DIR__ . '/.env.local';
-    if (!loadEnv($envLocalFile)) {
-        http_response_code(500);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Config file missing: please create api/.env']);
-        exit;
+// Load .env file — optional override for production config
+// If .env is absent, built-in defaults below will be used
+$searchDirs = [__DIR__];
+$parent = __DIR__;
+for ($i = 0; $i < 3; $i++) {
+    $next = dirname($parent);
+    if ($next === $parent) break; // reached filesystem root
+    $searchDirs[] = $next;
+    $parent = $next;
+}
+
+// .env found anywhere in parent chain will override defaults
+foreach ($searchDirs as $dir) {
+    if (loadEnv($dir . '/.env')) {
+        break;
     }
 }
 
-// Database configuration (must be read from .env)
-$requiredEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASS'];
-$missingVars = [];
-foreach ($requiredEnvVars as $var) {
-    if (!isset($_ENV[$var]) || $_ENV[$var] === '') {
-        $missingVars[] = $var;
-    }
-}
-if (!empty($missingVars)) {
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Missing required config: ' . implode(', ', $missingVars) . ', please configure in api/.env']);
-    exit;
-}
+// .env.local in pt_api/ overrides for local development
+loadEnv(__DIR__ . '/.env.local');
 
-define('DB_HOST', $_ENV['DB_HOST']);
-define('DB_NAME', $_ENV['DB_NAME']);
-define('DB_USER', $_ENV['DB_USER']);
-define('DB_PASS', $_ENV['DB_PASS']);
+// Database configuration — defaults used when .env is absent
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'peachtrees');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 define('DB_CHARSET', 'utf8mb4');
 
-// JWT configuration
-if (!isset($_ENV['JWT_SECRET']) || $_ENV['JWT_SECRET'] === '') {
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Missing required config: JWT_SECRET, please configure in api/.env']);
-    exit;
-}
-define('JWT_SECRET', $_ENV['JWT_SECRET']);
+// JWT configuration — change secret in .env for production
+define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? 'dev-only-insecure-key-CHANGE-ME');
 define('JWT_EXPIRE', 86400);
-
 // Timezone setting
 date_default_timezone_set('Asia/Shanghai');
 
@@ -120,12 +107,28 @@ if (!empty($uploadDir)) {
 }
 define('UPLOAD_DIR', $uploadDir);
 
-// Theme directory configuration (theme/ under project root)
-$themeDir = $projectRoot . '/theme';
+// Theme directory configuration (read from .env, supports user customization)
+$themeDir = $_ENV['THEME_DIR'] ?? '';
+if (!empty($themeDir)) {
+    $themeDir = rtrim($themeDir, '/\\');
+    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $themeDir)) {
+        $themeDir = $projectRoot . '/' . $themeDir;
+    }
+} else {
+    $themeDir = $projectRoot . '/theme';
+}
 define('THEME_DIR', $themeDir);
 
-// Style/pattern directory configuration (pattern/ under project root)
-$styleDir = $projectRoot . '/pattern';
+// Style/pattern directory configuration (read from .env, supports user customization)
+$styleDir = $_ENV['STYLE_DIR'] ?? '';
+if (!empty($styleDir)) {
+    $styleDir = rtrim($styleDir, '/\\');
+    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $styleDir)) {
+        $styleDir = $projectRoot . '/' . $styleDir;
+    }
+} else {
+    $styleDir = $projectRoot . '/pattern';
+}
 define('STYLE_DIR', $styleDir);
 
 // Upload URL configuration

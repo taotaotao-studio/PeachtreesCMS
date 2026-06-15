@@ -59,7 +59,7 @@ try {
     $coverMedia = is_array($coverMedia) ? $coverMedia : [];
     $post['cover_media'] = array_map(function ($path) {
         if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
-            return 'upload/media/' . substr($path, strlen('upload/bigpicture/'));
+            return 'upload/' . substr($path, strlen('upload/bigpicture/'));
         }
         return $path;
     }, $coverMedia);

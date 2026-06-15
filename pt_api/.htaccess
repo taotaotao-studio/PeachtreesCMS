@@ -1,0 +1,27 @@
+# PeachtreesCMS API — Apache 安全配置
+# 适用于共享主机（无法设置 nginx）的环境
+#
+# 如果主机使用 Apache + mod_rewrite / mod_authz_core，
+# 以下规则可阻止 .env / .installed 等敏感文件被直接下载。
+#
+# 注意：部分共享主机在 <FilesMatch> 中只支持旧语法：
+#   <FilesMatch "\.env$">
+#     Order allow,deny
+#     Deny from all
+#   </FilesMatch>
+# 如上述 Require all denied 返回 500，请改用旧语法。
+
+# 拒绝访问 .env 文件（含 .env.example 和 .env.local）
+<FilesMatch "\.env">
+    Require all denied
+</FilesMatch>
+
+# 拒绝访问安装锁文件
+<FilesMatch "\.installed$">
+    Require all denied
+</FilesMatch>
+
+# 拒绝访问 sessions 目录（存有 PHP session 数据）
+<IfModule mod_rewrite.c>
+    RewriteRule ^sessions/ - [F,L]
+</IfModule>

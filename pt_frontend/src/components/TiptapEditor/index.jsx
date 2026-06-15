@@ -7,7 +7,7 @@ import Link from '@tiptap/extension-link'
 import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { mediaAPI } from '../../services/api'
-import { toAbsolutePath } from '../../utils/path'
+import { publicUrl } from '../../utils/path'
 
 const Video = Node.create({
   name: 'video',
@@ -437,13 +437,13 @@ export default function TiptapEditor({ value, onChange, onUploadImage, onUploadV
                   {modalFiles.items.map((file) => (
                     <div className="card h-100 shadow-sm" key={file.path}>
                       <div className="media-preview">
-                        {file.type === 'image' && <img src={toAbsolutePath(file.url)} alt={file.path} className="media-thumb" />}
-                        {file.type === 'video' && <video className="media-thumb" controls src={toAbsolutePath(file.url)} />}
-                        {file.type === 'audio' && <audio className="media-audio" controls src={toAbsolutePath(file.url)} />}
+                        {file.type === 'image' && <img src={publicUrl(file.url)} alt={file.path} className="media-thumb" />}
+                        {file.type === 'video' && <video className="media-thumb" controls src={publicUrl(file.url)} />}
+                        {file.type === 'audio' && <audio className="media-audio" controls src={publicUrl(file.url)} />}
                       </div>
                       <div className="card-body">
                         <div className="text-break small mb-2">{file.path}</div>
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => insertMedia(toAbsolutePath(file.url))}>
+                        <button className="btn btn-sm btn-outline-primary" onClick={() => insertMedia(publicUrl(file.url))}>
                           <i className="bi bi-check2 me-1"></i>
                           {lang('mediaInsert')}
                         </button>

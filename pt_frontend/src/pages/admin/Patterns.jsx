@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { stylesAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { toAbsolutePath } from '../../utils/path'
+import { publicUrl } from '../../utils/path'
 
 export default function Patterns() {
   const { lang } = useLanguage()
@@ -56,7 +56,7 @@ export default function Patterns() {
                   <div className="pattern-card-thumb d-flex align-items-center justify-content-center bg-light" style={{ minHeight: '120px' }}>
                     {style.thumbnail ? (
                       <img
-                        src={toAbsolutePath(style.thumbnail)}
+                        src={publicUrl(style.thumbnail)}
                         alt={`${style.slug} preview`}
                         className="w-100 h-100 object-fit-cover"
                         loading="lazy"
@@ -81,7 +81,7 @@ export default function Patterns() {
                   </p>
                   <div className="d-flex gap-2">
                     <a
-                      href={toAbsolutePath(style.css_url)}
+                      href={publicUrl(style.css_url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-sm btn-outline-secondary flex-grow-1"

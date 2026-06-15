@@ -22,14 +22,13 @@ return [
     'install.complete' => '安装完成，数据库导入成功。',
     'install.delete_hint' => '为了安全，请在安装后删除 api/install.php。',
     'install.prefix_error' => '表前缀只能包含字母、数字和下划线',
+    'install.env_security_hint' => '安全提示：若使用共享主机，请将 api/.env 移到 web 根目录之外（如 public_html/ 的上一级），避免被意外下载。',
     'install.frontend' => '前台首页',
     'install.admin' => '后台登录',
     
     // API错误 - 通用
     'error.missing_config' => '缺少必要配置：',
-    'error.env_missing' => '配置文件缺失：请创建 api/.env',
     'error.db_connection' => '数据库连接失败',
-    'error.env_hint' => '，请在 api/.env 中配置',
     'error.method_not_allowed' => '方法不允许',
     'error.unauthorized' => '未授权',
     'error.forbidden' => '禁止访问',

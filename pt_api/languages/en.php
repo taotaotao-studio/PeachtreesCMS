@@ -22,14 +22,13 @@ return [
     'install.complete' => 'Installation complete. Database imported successfully.',
     'install.delete_hint' => 'For security, please delete api/install.php after installation.',
     'install.prefix_error' => 'Table prefix can only contain letters, numbers and underscores',
+    'install.env_security_hint' => 'Security: for shared hosting, move api/.env outside the web root (e.g., one directory above public_html/) to prevent accidental exposure.',
     'install.frontend' => 'Frontend Homepage',
     'install.admin' => 'Admin Login',
     
     // API errors - General
     'error.missing_config' => 'Missing required config: ',
-    'error.env_missing' => 'Config file missing: please create api/.env',
     'error.db_connection' => 'Database connection failed',
-    'error.env_hint' => ', please configure in api/.env',
     'error.method_not_allowed' => 'Method not allowed',
     'error.unauthorized' => 'Unauthorized',
     'error.forbidden' => 'Forbidden',

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { themesAPI, optionsAPI } from '../services/api'
-import { toAbsolutePath } from '../utils/path'
+import { publicUrl } from '../utils/path'
 
 const THEME_LINK_ID = 'pt-theme-style'
 
@@ -104,7 +104,7 @@ export function ThemeProvider({ children }) {
         nextLink.rel = 'stylesheet'
         document.head.appendChild(nextLink)
       }
-      nextLink.href = toAbsolutePath(theme.css_url)
+      nextLink.href = publicUrl(theme.css_url)
     }
   }, [isAdminRoute, theme])
 

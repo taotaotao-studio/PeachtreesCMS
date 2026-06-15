@@ -7,7 +7,7 @@ import Header from '../../components/Header'
 import CategoryNav from '../../components/CategoryNav'
 import Footer from '../../components/Footer'
 import { getLayoutComponent } from '../../layouts'
-import { toAbsolutePath } from '../../utils/path'
+import { publicUrl } from '../../utils/path'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination, Navigation } from 'swiper/modules'
 import 'swiper/css'
@@ -16,7 +16,7 @@ import 'swiper/css/navigation'
 
 function toPublicPath(path) {
   if (!path) return ''
-  return toAbsolutePath(path)
+  return publicUrl(path)
 }
 
 function isMp4(path) {
@@ -82,7 +82,7 @@ export default function PostDetail() {
     if (effectivePageStyle) {
       const link = document.createElement('link')
       link.rel = 'stylesheet'
-      link.href = toAbsolutePath(`/pattern/${effectivePageStyle}/style.css`)
+      link.href = publicUrl(`/pattern/${effectivePageStyle}/style.css`)
       link.id = 'page-pattern-css'
       document.head.appendChild(link)
     }

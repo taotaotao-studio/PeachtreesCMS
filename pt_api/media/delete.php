@@ -32,10 +32,6 @@ if (str_starts_with($path, 'upload/')) {
     $path = substr($path, 7);
 }
 
-if (!str_starts_with($path, 'media/')) {
-    error('Can only delete files in media directory');
-}
-
 $fullPath = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
 $realPath = realpath($fullPath);
 $uploadRoot = realpath(UPLOAD_DIR);
@@ -51,9 +47,9 @@ if (!@unlink($realPath)) {
     serverError('Failed to delete');
 }
 
-// Clean up empty directories (up to media directory)
+// Clean up empty directories (up to upload root)
 $currentDir = dirname($realPath);
-$mediaRoot = realpath(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'media');
+$mediaRoot = realpath(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR));
 while ($mediaRoot && strpos($currentDir, $mediaRoot) === 0 && $currentDir !== $mediaRoot) {
     $items = scandir($currentDir);
     if ($items && count($items) === 2) {
@@ -65,5 +61,5 @@ while ($mediaRoot && strpos($currentDir, $mediaRoot) === 0 && $currentDir !== $m
 }
 
 success([
-    'path' => '/pt_upload/' . str_replace('\\', '/', $path)
+    'path' => '/upload/' . str_replace('\\', '/', $path)
 ], 'Deleted successfully');

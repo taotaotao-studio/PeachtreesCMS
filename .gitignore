@@ -15,3 +15,10 @@ Thumbs.db
 
 # sessions
 pt_api/sessions/*
+
+# Environment (contains real credentials — never commit)
+pt_api/.env
+pt_api/.env.local
+
+# Install lock file
+pt_api/.installed

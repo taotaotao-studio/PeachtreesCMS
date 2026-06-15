@@ -45,7 +45,7 @@ function rewriteMediaUrls(?string $content): string {
     $content = $content ?? '';
     return preg_replace(
         '#https?://localhost/wordpress/wp-content/uploads/([0-9]{4}/[0-9]{2}/[^"\']+)#i',
-        '/upload/media/$1',
+        '/upload/$1',
         $content
     );
 }

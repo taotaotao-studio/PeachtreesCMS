@@ -1,0 +1,67 @@
+# PeachtreesCMS Nginx 配置示例 — 后端分离部署
+#
+# 部署结构：
+#   /var/www/html/blog/            ← 前端 + 静态资源（nginx root 下）
+#     ├── index.html
+#     ├── admin.html
+#     ├── assets/
+#     ├── upload/                  ← PHP 需要跨目录写入此目录
+#     ├── theme/
+#     ├── pattern/
+#     ├── languages/
+#     └── imgs/
+#
+#   /var/www/php/pt_api/           ← PHP 后端（在 web root 之外）
+#
+# ⚠️ 此方案需在 pt_api/.env 中手动配置路径（PHP 代码无法自动探测前端目录）：
+#
+#   UPLOAD_DIR=/var/www/html/blog/upload
+#   THEME_DIR=/var/www/html/blog/theme
+#   STYLE_DIR=/var/www/html/blog/pattern
+#   UPLOAD_URL_BASE=/blog/upload
+#
+# 并确保 php-fpm 的 open_basedir 允许 PHP 写入 /var/www/html/blog/upload/。
+#
+# 前端构建配置（与同目录方案一致）：
+#   vite.config.js → base: '/blog/'
+#   pt_frontend/.env → VITE_API_BASE_URL=/blog/pt_api/
+
+server {
+    listen 80;
+    listen [::]:80 default_server;
+
+    root /var/www/html;
+    index index.html;
+    server_name your-domain.com;
+
+    # 拒绝访问敏感文件
+    location ~ /\.env {
+        deny all;
+        return 404;
+    }
+
+    location ~ /\.installed {
+        deny all;
+        return 404;
+    }
+
+    # PHP 处理 — PHP 文件在 web root 之外，通过绝对路径指定
+    location ~ ^/blog/pt_api/(.+\.php)$ {
+        fastcgi_pass unix:/var/run/php/php-fpm.sock;
+        index index.php;
+        # Windows 使用 TCP:
+        # fastcgi_pass 127.0.0.1:9000;
+        fastcgi_param SCRIPT_FILENAME /var/www/php/pt_api/$1;
+        include fastcgi_params;
+    }
+
+    # 前端静态资源 + upload/theme/pattern/languages/imgs
+    location /blog/ {
+        try_files $uri $uri/ =404;
+
+        # 安全响应头
+        add_header X-Content-Type-Options nosniff;
+        add_header X-Frame-Options DENY;
+        add_header X-XSS-Protection "1; mode=block";
+    }
+}
