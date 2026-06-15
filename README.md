@@ -2,8 +2,6 @@
 
 一个基于前后端分离架构的内容管理系统。
 
-> 📖 在线文档：[https://taotaotao-studio.github.io/PeachtreesCMS/](https://taotaotao-studio.github.io/PeachtreesCMS/)
-
 ## 技术栈
 
 ### 后端
