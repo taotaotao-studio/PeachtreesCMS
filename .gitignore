@@ -3,8 +3,10 @@ pt_frontend/node_modules
 pt_frontend/public/upload
 pt_frontend/dist
 nginx-conf-debian
+
 # IDE
 .vscode
+.reasonix
 
 # OS
 .DS_Store

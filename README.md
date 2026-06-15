@@ -2,6 +2,8 @@
 
 一个基于前后端分离架构的内容管理系统。
 
+> 📖 在线文档：[https://taotaotao-studio.github.io/PeachtreesCMS/](https://taotaotao-studio.github.io/PeachtreesCMS/)
+
 ## 技术栈
 
 ### 后端
@@ -34,7 +36,6 @@
 ## 功能特性
 
 - 数据导入导出（支持 WordPress WXR 格式）
-- 可生成静态网站
 - RSS 订阅
 - 评论管理（支持审核和白名单）
 - 多语言支持 (中文/英文)
@@ -43,8 +44,8 @@
 ## 安装
 
 ### 1. 上传
-- api 目录
-- dist下所有文件，保持和 api 在同一级目录内
+- pt_api 目录
+- dist（需要进入 pt_frontend 然后运行 pnpm build 生成）下所有文件，保持和 api 在同一级目录内
 
 ```markdown
 /var/www/html/                    # Nginx 根目录
@@ -52,53 +53,14 @@
 ├── index.html                    # 前端入口
 ├── admin.html                    # 后台入口
 ├── assets/                       # 静态资源
+├── imgs/                         # 静态资源，包含用户头像
 ├── languages/                    # 语言文件
 ├── theme/                        # 主题文件
-└── pt_upload/                    # 上传文件目录
+├── pattern/                      # 风格文件
+└── upload/                       # 上传文件目录
 ```
 
-#### 2. 配置 Nginx
-
-```nginx
-
-http {
-    server {
-        listen       80;
-        server_name  your-domain.com;
-        root         /var/www/html;
-
-        # 拒绝访问敏感文件
-        location ~ /\.env {
-            deny all;
-            return 404;
-        }
-
-        location ~ /\.installed {
-            deny all;
-            return 404;
-        }
-
-        # PeachtreesCMS
-        location ~ ^/pt_api/(.+\.php)$ {
-            fastcgi_pass unix:/var/run/php/php-fpm.sock;
-            index index.php;
-            # windows
-            # fastcgi_pass 127.0.0.1:9000;
-            # linux
-            fastcgi_param SCRIPT_FILENAME /var/www/pt_api/$1;
-            include fastcgi_params;
-        }
-
-        # upload follder alias
-        location /pt_upload/ {
-            alias /var/www/html/pt_upload/;
-        }
-    }
-
-}
-```
-
-### 3. 运行安装程序
+#### 2. 运行安装程序
 
 - 运行 http://your-domain.com/pt_api/install.php
 
@@ -122,44 +84,10 @@ pnpm dev # 启动开发服务器
 - default 为内置一栏主题
 - peachtrees-two-column 为内置两栏主题
 
-## 命令行工具
+### 4. 风格文件夹 `public\pattern`
+- 分类和每篇文章都能选择风格，分类风格优先于文章风格
+- 简单修改页面背景、定制页面配色等
 
-项目 `scripts/` 目录下提供两个实用脚本：
-
-### 1. 静态网站导出 (`ssg-export.mjs`)
-
-将动态网站导出为纯静态 HTML 文件，可直接部署到任意静态服务器。
-
-**通过后台界面导出（推荐）：**
-- 登录后台 → 数据管理 → 导出静态网站
-
-**通过命令行导出：**
-```bash
-node scripts/ssg-export.mjs --data static_html/.export_payload.json --out static_html --status static_html/.export_status.json
-```
-
-导出后上传 `static_html/` 目录下所有文件即可。
-
-说明：
-- `.export_payload.json` 会在点击后台"导出静态网站"时由 API 自动生成
-- 该文件是导出时由 API 临时生成的，导出结束后会被删除
-- 该命令会覆盖并重新生成 `static_html/`
-
-### 2. 数据库初始化文件导出 (`export-data-init.php`)
-
-将当前数据库结构和数据导出为 `data-init.sql` 文件，用于新环境的初始化。
-
-**使用方法：**
-```bash
-php scripts/export-data-init.php
-```
-
-执行后会在项目根目录生成 `data-init.sql` 文件。
-
-**使用场景：**
-- 开发环境数据库结构变更后，重新生成初始化文件
-- 备份当前数据库结构用于新环境部署
-- 版本发布时包含最新的数据结构
 
 ---
 This project uses a custom non-commercial license. See LICENSE file for details.
