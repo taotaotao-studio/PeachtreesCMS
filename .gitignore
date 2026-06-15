@@ -1,0 +1,10 @@
+# Dependencies
+pt_frontend/node_modules
+pt_frontend/dist
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
