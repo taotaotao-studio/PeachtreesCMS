@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { postsAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import Pager from '../../components/Pager'
+import { publicUrl } from '../../utils/path'
 
 export default function PostList() {
   const [posts, setPosts] = useState([])
@@ -104,7 +105,7 @@ export default function PostList() {
                   <tr key={post.id}>
                     <td className="align-middle">{post.id}</td>
                     <td className="align-middle">
-                      <a href={`/#/post/${post.slug || post.id}`} target="_blank" rel="noopener noreferrer" className="text-decoration-none">
+                      <a href={publicUrl(`/#/post/${post.slug || post.id}`)} target="_blank" rel="noopener noreferrer" className="text-decoration-none">
                         {post.title}
                       </a>
                       {post.post_type === 'big-picture' && (

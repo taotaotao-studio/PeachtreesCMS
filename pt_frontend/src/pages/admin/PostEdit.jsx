@@ -380,14 +380,14 @@ export default function PostEdit({ forcedPostType = null }) {
                   >
                     <option value="">{lang('pageStyleDefault')}</option>
                     {patterns.map(pattern => (
-                      <option key={pattern.id} value={pattern.id}>
+                      <option key={pattern.id} value={pattern.name}>
                         {pattern.name}
                       </option>
                     ))}
                   </select>
                   {form.page_style && (
                     <small className="text-muted d-block mt-1">
-                      {patterns.find(p => p.id === form.page_style)?.description || ''}
+                      {patterns.find(p => p.name === form.page_style)?.description || ''}
                     </small>
                   )}
                 </div>

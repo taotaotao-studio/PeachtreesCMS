@@ -1,0 +1,5 @@
+/* Pattern 01 - Classic Blue */
+body {
+  background-image: url("./endless-clouds.svg");
+  background-repeat: repeat;
+}

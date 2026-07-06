@@ -16,8 +16,63 @@ function stylePublicCssUrl(string $slug, string $entryCss = 'style.css'): string
     return '/pattern/' . rawurlencode($slug) . '/' . ltrim($entryCss, '/');
 }
 
-function scanStylePackages(PDO $pdo): void {
-    $baseDir = stylesBaseDir();
+/**
+ * Get the cache file path for style scan metadata.
+ */
+function styleScanCachePath(): string {
+    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'peachtrees_style_scan.json';
+}
+
+/**
+ * Compute a fingerprint of all style directories to detect changes.
+ * Returns an array of [dirname => filemtime] for each style dir.
+ */
+function styleDirFingerprint(string $baseDir): array {
+    $styleDirs = glob($baseDir . '/*', GLOB_ONLYDIR);
+    if ($styleDirs === false) {
+        return [];
+    }
+    $fp = [];
+    foreach ($styleDirs as $dir) {
+        $fp[basename($dir)] = filemtime($dir);
+    }
+    return $fp;
+}
+
+/**
+ * Check whether the style directory has changed since last scan.
+ * Returns true if a rescan is needed (new dir, removed dir, or mtime changed).
+ */
+function needsStyleRescan(string $baseDir): bool {
+    $cacheFile = styleScanCachePath();
+    if (!file_exists($cacheFile)) {
+        return true;
+    }
+    $cache = json_decode(file_get_contents($cacheFile), true);
+    if (!is_array($cache) || !isset($cache['fingerprint'])) {
+        return true;
+    }
+    $current = styleDirFingerprint($baseDir);
+    return $current !== $cache['fingerprint'];
+}
+
+/**
+ * Save the current style directory fingerprint after a successful scan.
+ */
+function markStyleScanned(string $baseDir): void {
+    $cacheFile = styleScanCachePath();
+    $data = [
+        'fingerprint' => styleDirFingerprint($baseDir),
+        'scanned_at'  => time(),
+    ];
+    file_put_contents($cacheFile, json_encode($data));
+}
+
+/**
+ * Perform the actual directory scan and upsert into pt_page_style.
+ * Internal worker; prefer scanStylePackages() which includes caching.
+ */
+function doScanStylePackages(PDO $pdo, string $baseDir): void {
     $styleDirs = glob($baseDir . '/*', GLOB_ONLYDIR);
     if ($styleDirs === false) {
         $styleDirs = [];
@@ -48,14 +103,10 @@ function scanStylePackages(PDO $pdo): void {
                 if ($entryCss !== '') {
                     $meta['entry_css'] = ltrim($entryCss, '/');
                 }
-            }
-        }
-
-        $files = scandir($styleDir);
-        foreach ($files as $file) {
-            if (preg_match('/^bg\.(svg|png|jpg|jpeg|gif|webp)$/i', $file)) {
-                $meta['thumbnail'] = '/pattern/' . $slug . '/' . $file;
-                break;
+                $thumb = trim($decoded['thumbnail'] ?? '');
+                if ($thumb !== '') {
+                    $meta['thumbnail'] = '/pattern/' . $slug . '/' . ltrim($thumb, '/');
+                }
             }
         }
 
@@ -82,4 +133,20 @@ function scanStylePackages(PDO $pdo): void {
             $meta['thumbnail']
         ]);
     }
+}
+
+/**
+ * Scan style packages and sync to the database.
+ * Uses directory fingerprint caching: skips the scan if nothing changed since
+ * last run. Pass $force=true to bypass the cache (e.g. from a ?rescan endpoint).
+ */
+function scanStylePackages(PDO $pdo, bool $force = false): void {
+    $baseDir = stylesBaseDir();
+
+    if (!$force && !needsStyleRescan($baseDir)) {
+        return;
+    }
+
+    doScanStylePackages($pdo, $baseDir);
+    markStyleScanned($baseDir);
 }

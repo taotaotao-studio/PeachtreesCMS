@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { pluginsAPI } from '../../services/api'
 import { useEffect, useMemo, useState } from 'react'
+import { publicUrl } from '../../utils/path'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
@@ -191,7 +192,7 @@ export default function AdminLayout() {
               {lang('logout')}
             </button>
             <a
-              href="/"
+              href={publicUrl("/")}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-outline-primary btn-sm"

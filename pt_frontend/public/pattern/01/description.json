@@ -1,6 +1,7 @@
 {
-  "name": "01 - Classic Blue",
-  "description": "经典蓝色背景，适合商务和正式场合",
+  "name": "01",
+  "description": "浅色等高线纹理背景",
   "author": "PeachtreesCMS",
-  "version": "1.0"
+  "version": "1.0",
+  "thumbnail": "bg.svg"
 }

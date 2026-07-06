@@ -14,7 +14,8 @@ requireAdmin();
 
 try {
     $pdo = getDB();
-    scanStylePackages($pdo);
+    $forceRescan = !empty($_GET['rescan']);
+    scanStylePackages($pdo, $forceRescan);
 
     $stmt = $pdo->query("SELECT id, name, description, version, author, entry_css, thumbnail FROM pt_page_style ORDER BY id ASC");
     $styles = $stmt ? $stmt->fetchAll() : [];
