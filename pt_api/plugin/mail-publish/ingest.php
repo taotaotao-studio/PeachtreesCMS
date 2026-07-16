@@ -92,90 +92,10 @@ if ($defaultTag) {
     }
 }
 
-$uploadImageUrl = null;
-$uploadImagePath = null;
-
-if (!function_exists('finfo_open')) {
-    serverError('Server configuration error: fileinfo extension not enabled');
-}
-
-if (!empty($_FILES)) {
-    $fileEntries = [];
-    foreach ($_FILES as $file) {
-        if (is_array($file['name'])) {
-            $count = count($file['name']);
-            for ($i = 0; $i < $count; $i++) {
-                $fileEntries[] = [
-                    'name' => $file['name'][$i],
-                    'type' => $file['type'][$i],
-                    'tmp_name' => $file['tmp_name'][$i],
-                    'error' => $file['error'][$i],
-                    'size' => $file['size'][$i]
-                ];
-            }
-        } else {
-            $fileEntries[] = $file;
-        }
-    }
-
-    $fileEntries = array_values(array_filter($fileEntries, function ($entry) {
-        return isset($entry['error']) && $entry['error'] !== UPLOAD_ERR_NO_FILE;
-    }));
-
-    if (count($fileEntries) > 1) {
-        error('Only one image attachment is allowed');
-    }
-
-    if (count($fileEntries) === 1) {
-        $file = $fileEntries[0];
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            error('Attachment upload failed');
-        }
-
-        $allowedMimeToExt = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            'image/gif' => 'gif'
-        ];
-
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $file['tmp_name']);
-        finfo_close($finfo);
-
-        if (!isset($allowedMimeToExt[$mime])) {
-            error('Only jpg/png/webp/gif image attachments are supported');
-        }
-
-        $year = date('Y');
-        $month = date('m');
-        $day = date('d');
-        $relativeDir = "{$year}/{$month}";
-        $absoluteDir = UPLOAD_DIR . $relativeDir;
-        $uploadRoot = UPLOAD_DIR;
-
-        if (!is_dir($absoluteDir)) {
-            if (!is_dir($uploadRoot) || !is_writable($uploadRoot)) {
-                serverError('Upload directory not writable, check upload permissions: ' . $uploadRoot);
-            }
-            if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
-                serverError('Failed to create upload directory: ' . $absoluteDir);
-            }
-        }
-
-        $ext = $allowedMimeToExt[$mime];
-        $hash = bin2hex(random_bytes(8));
-        $filename = "{$day}-{$hash}.{$ext}";
-        $relativePath = "upload/{$relativeDir}/{$filename}";
-        $absolutePath = UPLOAD_DIR . "{$relativeDir}/{$filename}";
-
-        if (!move_uploaded_file($file['tmp_name'], $absolutePath)) {
-            serverError('Failed to save attachment');
-        }
-
-        $uploadImagePath = $relativePath;
-        $uploadImageUrl = '/' . $relativePath;
-    }
+// Receive pre-uploaded image URLs from mail_handler.php
+$uploadImageUrls = [];
+if (!empty($_POST['image_urls'])) {
+    $uploadImageUrls = json_decode($_POST['image_urls'], true) ?: [];
 }
 
 function safeTextToHtml(string $text): string {
@@ -189,12 +109,107 @@ function safeTextToHtml(string $text): string {
     return implode("\n", $paragraphs);
 }
 
-$contentHtml = safeTextToHtml($text);
-if ($uploadImageUrl) {
-    $imageHtml = '<p><img src="' . $uploadImageUrl . '" alt="" /></p>';
-    $contentHtml = $imageHtml . "\n" . $contentHtml;
+// CID mapping: replace cid: references with actual uploaded image URLs
+$cidMapping = [];
+if (!empty($_POST['cid_mapping'])) {
+    $cidMapping = json_decode($_POST['cid_mapping'], true) ?: [];
 }
+
+// Determine content HTML
+$htmlInput = !empty($_POST['html']) ? $_POST['html'] : '';
+
+if (!empty($htmlInput)) {
+    // Use HTML body directly, then replace cid: references
+    $contentHtml = $htmlInput;
+
+    // Replace cid: references with uploaded image URLs
+    if (!empty($cidMapping)) {
+        foreach ($cidMapping as $cid => $url) {
+            $contentHtml = str_replace('cid:' . $cid, $url, $contentHtml);
+        }
+    }
+
+    // Remove any remaining cid: img tags (broken references)
+    $contentHtml = preg_replace('/<img[^>]*cid:[^>]*>/i', '', $contentHtml);
+
+    // Append non-CID images at the top
+    $cidUrls = array_values($cidMapping);
+    $extraImages = [];
+    foreach ($uploadImageUrls as $url) {
+        if (!in_array($url, $cidUrls)) {
+            $extraImages[] = '<p><img src="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" alt="" /></p>';
+        }
+    }
+    if (!empty($extraImages)) {
+        $contentHtml = implode("\n", $extraImages) . "\n" . $contentHtml;
+    }
+} else {
+    // Fallback: plain text to HTML
+    $contentHtml = safeTextToHtml($text);
+    if (!empty($uploadImageUrls)) {
+        $imageHtmlParts = [];
+        foreach ($uploadImageUrls as $url) {
+            $imageHtmlParts[] = '<p><img src="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" alt="" /></p>';
+        }
+        $contentHtml = implode("\n", $imageHtmlParts) . "\n" . $contentHtml;
+    }
+}
+
+
 
 $plainSummary = strip_tags($contentHtml);
 if (function_exists('mb_substr')) {
     $summary = mb_substr($plainSummary, 0, 160, 'UTF-8');
+
+} else {
+    $summary = substr($plainSummary, 0, 160);
+}
+
+// Generate slug from title
+function generateSlug(string $title): string {
+    if (preg_match('/[\x{4e00}-\x{9fff}]/u', $title)) {
+        return 'mail-' . substr(md5($title . microtime()), 0, 8);
+    }
+    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title), '-'));
+    return 'mail-' . substr($slug, 0, 50);
+}
+
+// Ensure slug uniqueness
+$baseSlug = generateSlug($subject);
+$slug = $baseSlug;
+$slugSuffix = 1;
+$slugCheck = $pdo->prepare('SELECT id FROM pt_posts WHERE slug = ? LIMIT 1');
+while (true) {
+    $slugCheck->execute([$slug]);
+    if (!$slugCheck->fetch()) break;
+    $slug = $baseSlug . '-' . $slugSuffix++;
+}
+
+try {
+    $insertSql = "INSERT INTO pt_posts (tag, post_type, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at)
+                  VALUES (?, 'normal', ?, ?, ?, '[]', ?, 1, 1, NOW(), NOW())";
+    $insertStmt = $pdo->prepare($insertSql);
+    $insertStmt->execute([
+        $tag,
+        $subject,
+        $slug,
+        $summary,
+        $contentHtml
+    ]);
+
+    $postId = $pdo->lastInsertId();
+
+    if ($tag) {
+        $updateCount = $pdo->prepare("UPDATE pt_tags SET post_count = (SELECT COUNT(*) FROM pt_posts WHERE tag = ?) WHERE tag = ?");
+        $updateCount->execute([$tag, $tag]);
+    }
+
+    success([
+        'id' => (int)$postId,
+        'slug' => $slug,
+        'title' => $subject
+    ], 'Post published via email');
+
+} catch (PDOException $e) {
+    serverError('Failed to create post: ' . $e->getMessage());
+}

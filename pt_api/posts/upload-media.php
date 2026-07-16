@@ -2,7 +2,7 @@
 /**
  * PeachtreesCMS API - Upload Normal Post Media (image/video/audio)
  * POST /api/posts/upload-media.php
- * Requires authentication
+ * Supports session auth or mail token auth (X-Mail-Token header / token POST field)
  */
 
 require_once __DIR__ . '/../cors.php';
@@ -14,7 +14,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
 }
 
-requireAuth();
+// Support both session auth and mail token auth
+$authenticated = false;
+$user = getCurrentUser();
+if ($user) {
+    $authenticated = true;
+} else {
+    // Fallback: token-based auth for mail handler
+    $token = $_POST['token'] ?? ($_SERVER['HTTP_X_MAIL_TOKEN'] ?? '');
+    if ($token !== '') {
+        $pdo = getDB();
+        $stmt = $pdo->prepare('SELECT option_value FROM pt_options WHERE option_key = ? LIMIT 1');
+        $stmt->execute(['mail_publish_secret']);
+        $row = $stmt->fetch();
+        $secret = $row ? (string)$row['option_value'] : '';
+        if ($secret !== '' && hash_equals($secret, $token)) {
+            $authenticated = true;
+        }
+    }
+}
+if (!$authenticated) {
+    unauthorized('Please login first');
+}
 
 if (!isset($_FILES['file'])) {
     error('Please upload a media file');
@@ -66,7 +87,7 @@ try {
             serverError('Upload directory not writable, please check upload directory permissions: ' . $uploadRoot);
         }
         if (!@mkdir($absoluteDir, 0755, true) && !is_dir($absoluteDir)) {
-            serverError('Failed to create upload directory: ' . $absoluteDir);
+            serverError('Failed to create upload directory');
         }
     }
 
@@ -82,7 +103,7 @@ try {
 
     success([
         'path' => $relativePath,
-        'url' => '/' . $relativePath
+        'url' => UPLOAD_URL . $relativeDir . '/' . $filename
     ], 'Upload successful');
 } catch (Exception $e) {
     serverError('Upload failed: ' . $e->getMessage());
