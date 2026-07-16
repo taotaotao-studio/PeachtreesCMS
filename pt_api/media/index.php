@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 requireAdmin();
 
-$baseDir = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR);
+$baseDir = rtrim(UPLOAD_DIR, '/\\');
 if (!is_dir($baseDir)) {
     success([
         'files' => []
@@ -41,7 +41,7 @@ foreach ($iterator as $file) {
         continue;
     }
 
-    $relativePath = str_replace('\\', '/', substr($file->getPathname(), strlen(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR)) + 1));
+    $relativePath = str_replace('\\', '/', substr($file->getPathname(), strlen($baseDir) + 1));
     $type = in_array($ext, $imageExts, true) ? 'image' : (in_array($ext, $videoExts, true) ? 'video' : 'audio');
 
     $files[] = [

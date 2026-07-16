@@ -7,23 +7,25 @@ export default defineConfig(() => ({
   server: {
     port: 5173,
     proxy: {
-      // API 代理：/pt_api/xxx → http://localhost/pt_api/xxx
-      '/pt_api/': {
+      // API 代理：/PeachtreesCMS/pt_api/xxx → http://localhost/PeachtreesCMS/pt_api/xxx
+      '/PeachtreesCMS/pt_api/': {
+        target: 'http://localhost',
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            proxyRes.headers['cache-control'] = 'no-store, no-cache, must-revalidate'
+            delete proxyRes.headers['etag']
+            delete proxyRes.headers['last-modified']
+          })
+        }
+      },
+      // 上传文件代理：/PeachtreesCMS/upload/xxx → http://localhost/PeachtreesCMS/upload/xxx
+      '/PeachtreesCMS/upload/': {
         target: 'http://localhost',
         changeOrigin: true
       },
-      // 上传文件代理：/upload/xxx → http://localhost/upload/xxx
-      '/upload/': {
-        target: 'http://localhost',
-        changeOrigin: true
-      },
-      // 主题资源代理：/theme/xxx → http://localhost/theme/xxx
-      '/theme/': {
-        target: 'http://localhost',
-        changeOrigin: true
-      },
-      // 页面样式代理：/pattern/xxx → http://localhost/pattern/xxx
-      '/pattern/': {
+      // 主题资源代理：/PeachtreesCMS/theme/xxx → http://localhost/PeachtreesCMS/theme/xxx
+      '/PeachtreesCMS/theme/': {
         target: 'http://localhost',
         changeOrigin: true
       }
