@@ -9,7 +9,17 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import Home from './pages/Home'
 import PostDetail from './pages/PostDetail'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const frontendContainer = document.getElementById('root')
+const frontendRoot = ReactDOM.createRoot(frontendContainer)
+
+// Vite HMR — entry module should NOT self-accept; full reload on change is correct
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    frontendRoot.unmount()
+  })
+}
+
+frontendRoot.render(
   <React.StrictMode>
     <ThemeProvider>
       <LanguageProvider>
@@ -19,7 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               {/* Frontend routes only */}
               <Route path="/" element={<Home />} />
               <Route path="/post/:identifier" element={<PostDetail />} />
-              
+
               {/* 404 */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

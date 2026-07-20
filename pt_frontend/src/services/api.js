@@ -44,7 +44,9 @@ export const postsAPI = {
   delete: (id) =>
     api.delete('/posts/delete.php', { data: { id } }),
   toggleActive: (id) =>
-    api.put('/posts/toggle-active.php', { id })
+    api.put('/posts/toggle-active.php', { id }),
+  batchToggle: (ids, active) =>
+    api.put('/posts/batch-toggle.php', { ids, active })
 }
 
 // 标签 API
@@ -79,6 +81,8 @@ export const commentsAPI = {
     api.post('/comments/create.php', data),
   approve: (data) =>
     api.put('/comments/approve.php', data),
+  batchApprove: (ids, status) =>
+    api.put('/comments/batch-approve.php', { ids, status }),
   getWhitelist: (params = {}) =>
     api.get('/comments/whitelist.php', { params }),
   setWhitelist: (data) =>

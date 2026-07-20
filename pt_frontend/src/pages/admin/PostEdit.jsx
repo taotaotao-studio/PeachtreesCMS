@@ -32,7 +32,8 @@ export default function PostEdit({ forcedPostType = null }) {
     cover_media: [],
     page_style: '',
     content: '',
-    allow_comments: true
+    allow_comments: true,
+    created_at: ''
   })
   const { lang } = useLanguage()
 
@@ -43,6 +44,20 @@ export default function PostEdit({ forcedPostType = null }) {
     loadPatterns()
     if (isEdit) {
       loadPost()
+    } else {
+      // 新建模式：重置表单
+      setForm({
+        post_type: forcedPostType || 'normal',
+        title: '',
+        slug: '',
+        tag: '',
+        summary: '',
+        cover_media: [],
+        page_style: '',
+        content: '',
+        allow_comments: true,
+        created_at: ''
+      })
     }
   }, [id])
 
@@ -91,7 +106,8 @@ export default function PostEdit({ forcedPostType = null }) {
           cover_media: Array.isArray(res.data.cover_media) ? res.data.cover_media : [],
           page_style: res.data.page_style || '',
           content: res.data.content,
-          allow_comments: res.data.allow_comments === 1
+          allow_comments: res.data.allow_comments === 1,
+          created_at: res.data.created_at || ''
         })
       }
     } catch (err) {
@@ -291,8 +307,7 @@ export default function PostEdit({ forcedPostType = null }) {
           <form onSubmit={handleSubmit}>
             <div className="card-body">
               <div className="mb-3">
-                <label className="form-label">
-                  <i className="bi bi-type me-1"></i>
+                <label className="form-label fw-bold">
                   {lang('postTitle')} <span className="text-danger">*</span>
                 </label>
                 <input
@@ -307,8 +322,7 @@ export default function PostEdit({ forcedPostType = null }) {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">
-                  <i className="bi bi-link me-1"></i>
+                <label className="form-label fw-bold">
                   {lang('customSlug')}
                 </label>
                 <div className="input-group">
@@ -327,10 +341,29 @@ export default function PostEdit({ forcedPostType = null }) {
                 </small>
               </div>
 
+              <div className="mb-3">
+                <label className="form-label fw-bold">
+                  {lang('publishTime')}
+                </label>
+                <input
+                  type="datetime-local"
+                  name="created_at"
+                  className="form-control"
+                  style={{ maxWidth: '320px' }}
+                  value={form.created_at ? form.created_at.replace(' ', 'T').slice(0, 16) : ''}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setForm({ ...form, created_at: val ? val.replace('T', ' ') + ':00' : '' })
+                  }}
+                />
+                <small className="text-muted">
+                  {lang('publishTimeHelp')}
+                </small>
+              </div>
+
               {!forcedPostType && (
                 <div className="mb-3">
-                  <label className="form-label">
-                    <i className="bi bi-collection me-1"></i>
+                  <label className="form-label fw-bold">
                     {lang('postType')}
                   </label>
                   <div className="d-flex gap-4">
@@ -368,8 +401,7 @@ export default function PostEdit({ forcedPostType = null }) {
 
               {patterns.length > 0 && (
                 <div className="mb-3">
-                  <label className="form-label">
-                    <i className="bi bi-palette me-1"></i>
+                  <label className="form-label fw-bold">
                     {lang('pageStyle')}
                   </label>
                   <select
@@ -394,8 +426,7 @@ export default function PostEdit({ forcedPostType = null }) {
               )}
 
               <div className="mb-3">
-                <label className="form-label">
-                  <i className="bi bi-tags me-1"></i>
+                <label className="form-label fw-bold">
                   {lang('postCategory')} <span className="text-danger">*</span>
                 </label>
                 <select
@@ -416,8 +447,7 @@ export default function PostEdit({ forcedPostType = null }) {
               {isBigPicture && (
                 <>
                   <div className="mb-3">
-                    <label className="form-label">
-                      <i className="bi bi-card-text me-1"></i>
+                    <label className="form-label fw-bold">
                       {lang('coverSummary')}
                     </label>
                     <textarea
@@ -431,8 +461,7 @@ export default function PostEdit({ forcedPostType = null }) {
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label">
-                      <i className="bi bi-images me-1"></i>
+                    <label className="form-label fw-bold">
                       {lang('coverMedia')}
                     </label>
                     <input
@@ -525,8 +554,7 @@ export default function PostEdit({ forcedPostType = null }) {
               )}
 
               <div className="mb-3">
-                <label className="form-label">
-                  <i className="bi bi-body-text me-1"></i>
+                <label className="form-label fw-bold">
                   {lang('postContent')}
                 </label>
                 <Suspense fallback={
@@ -557,8 +585,7 @@ export default function PostEdit({ forcedPostType = null }) {
                     checked={form.allow_comments}
                     onChange={(e) => setForm({ ...form, allow_comments: e.target.checked })}
                   />
-                  <label className="form-check-label" htmlFor="allowComments">
-                    <i className="bi bi-chat-dots me-1"></i>
+                  <label className="form-check-label fw-bold" htmlFor="allowComments">
                     {lang('allowComments')}
                   </label>
                 </div>

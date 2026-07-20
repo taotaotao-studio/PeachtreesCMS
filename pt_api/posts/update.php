@@ -30,6 +30,19 @@ $pageStyle = isset($input['page_style']) ? trim($input['page_style']) : null;
 $content = $input['content'] ?? '';
 $allowComments = isset($input['allow_comments']) ? intval($input['allow_comments']) : null;
 
+// scheduled publish: accept created_at
+$createdAt = null;
+$isFuture = false;
+if (array_key_exists('created_at', $input)) {
+    $createdAt = trim($input['created_at'] ?? '');
+    if ($createdAt !== '') {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/', $createdAt)) {
+            error('Invalid date format, expected YYYY-MM-DD HH:MM:SS');
+        }
+        $isFuture = strtotime($createdAt) > time();
+    }
+}
+
 // Handle slug - if not provided or empty string, set to null (use ID as URL)
 $slug = null;
 if (array_key_exists('slug', $input)) {
@@ -86,7 +99,7 @@ try {
     }
 
     // Check if post exists
-    $checkStmt = $pdo->prepare("SELECT id, tag, post_type, slug, summary, cover_media, allow_comments FROM pt_posts WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, tag, post_type, slug, summary, cover_media, allow_comments, created_at FROM pt_posts WHERE id = ?");
     $checkStmt->execute([$id]);
     $oldPost = $checkStmt->fetch();
 
@@ -129,8 +142,9 @@ try {
     }
     // Otherwise, user set a new slug value, use the new value
 
-    // Update post
-    $sql = "UPDATE pt_posts SET tag = ?, post_type = ?, page_style = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, updated_at = NOW() WHERE id = ?";
+    // Update post — include created_at and active for scheduled publishing
+    $active = $isFuture ? 0 : 1;
+    $sql = "UPDATE pt_posts SET tag = ?, post_type = ?, page_style = ?, title = ?, slug = ?, summary = ?, cover_media = ?, content = ?, allow_comments = ?, active = ?, created_at = ?, updated_at = NOW() WHERE id = ?";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $tag,
@@ -142,6 +156,8 @@ try {
         json_encode(array_values($coverMedia), JSON_UNESCAPED_UNICODE),
         $content,
         $allowComments,
+        $active,
+        $createdAt !== null ? $createdAt : $oldPost['created_at'],
         $id
     ]);
 

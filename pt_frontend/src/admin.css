@@ -1,4 +1,54 @@
 /* Admin-only styles */
+/* Editor toolbar — borderless + doubled icons */
+.tiptap-editor .card-header .btn,
+.tiptap-simple-editor .card-header .btn {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.tiptap-editor .card-header .btn .bi,
+.tiptap-simple-editor .card-header .btn .bi {
+  font-size: 1.75rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* PostList action buttons — borderless greyscale */
+.post-action-btn {
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 1.25rem;
+  color: #6c757d;
+  background: transparent;
+}
+
+.post-action-btn:hover {
+  color: #495057;
+  background: #e9ecef;
+}
+
+.post-action-btn.post-action-edit:hover {
+  color: #212529;
+}
+
+/* Published → click to unpublish (stronger grey, like active state) */
+.post-action-btn.post-action-toggle.active {
+  color: #212529;
+}
+
+.post-action-btn.post-action-toggle.active:hover {
+  color: #dc3545;
+}
+
+/* Draft → click to publish */
+.post-action-btn.post-action-toggle:not(.active) {
+  color: #adb5bd;
+}
+
+.post-action-btn.post-action-delete:hover {
+  color: #dc3545;
+}
+
 .tiptap-editor .tiptap-editor-content {
   min-height: 320px;
   padding: 1rem;

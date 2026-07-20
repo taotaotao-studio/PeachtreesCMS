@@ -45,7 +45,17 @@ function ProtectedRoute({ children }) {
   return children
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const adminContainer = document.getElementById('root')
+const adminRoot = ReactDOM.createRoot(adminContainer)
+
+// Vite HMR — entry module should NOT self-accept; full reload on change is correct
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    adminRoot.unmount()
+  })
+}
+
+adminRoot.render(
   <React.StrictMode>
     <ThemeProvider>
       <LanguageProvider>

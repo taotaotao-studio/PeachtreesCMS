@@ -29,6 +29,16 @@ $coverMedia = $input['cover_media'] ?? [];
 $pageStyle = trim($input['page_style'] ?? '');
 $content = $input['content'] ?? '';
 $allowComments = isset($input['allow_comments']) ? intval($input['allow_comments']) : 1;
+// scheduled publish: accept created_at, force active=0 when future
+$createdAt = null;
+if (!empty($input['created_at'])) {
+    $createdAt = trim($input['created_at']);
+    // basic datetime validation
+    if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/', $createdAt)) {
+        error('Invalid date format, expected YYYY-MM-DD HH:MM:SS');
+    }
+}
+$isFuture = $createdAt && strtotime($createdAt) > time();
 
 // Validate input
 if (empty($title)) {
@@ -79,8 +89,10 @@ if ($postType === 'big-picture' && count($coverMedia) === 0) {
         error('Selected category does not exist');
     }
     
-    // Insert post
-    $sql = "INSERT INTO pt_posts (tag, post_type, page_style, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())";
+    // Insert post — default active=1, created_at uses NOW() or custom value
+    $active = $isFuture ? 0 : 1;
+    $now = date('Y-m-d H:i:s');
+    $sql = "INSERT INTO pt_posts (tag, post_type, page_style, title, slug, summary, cover_media, content, allow_comments, active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         $tag,
@@ -91,7 +103,10 @@ if ($postType === 'big-picture' && count($coverMedia) === 0) {
         $summary,
         json_encode(array_values($coverMedia), JSON_UNESCAPED_UNICODE),
         $content,
-        $allowComments
+        $allowComments,
+        $active,
+        $createdAt ?: $now,
+        $now
     ]);
     
     $postId = $pdo->lastInsertId();

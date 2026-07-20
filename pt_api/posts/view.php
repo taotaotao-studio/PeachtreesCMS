@@ -7,6 +7,7 @@
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
+require_once __DIR__ . '/../auth.php';
 
 // Only accept GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -50,8 +51,9 @@ try {
         notFound('Post not found');
     }
 
-    // Check if post is published
-    if ($post['active'] != 1) {
+    // 管理员后台可查看所有文章（含下架）
+    $isAdmin = isAdmin();
+    if ($post['active'] != 1 && !$isAdmin) {
         notFound('Post not found');
     }
 

@@ -8,8 +8,10 @@ export default function Comments() {
   const [comments, setComments] = useState([])
   const [posts, setPosts] = useState({})
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all') // all, pending, approved, rejected
+  const [batchLoading, setBatchLoading] = useState(false)
+  const [filter, setFilter] = useState('all')
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
+  const [selectedIds, setSelectedIds] = useState(new Set())
   const { lang } = useLanguage()
 
   const page = pagination.page
@@ -21,10 +23,8 @@ export default function Comments() {
   const loadComments = async () => {
     setLoading(true)
     try {
-      // 构建查询参数
       let params = { page, page_size: 20, flat: 1 }
 
-      // 根据筛选条件设置状态
       if (filter === 'pending') {
         params.status = 0
       } else if (filter === 'approved') {
@@ -37,10 +37,9 @@ export default function Comments() {
       if (res.success) {
         setComments(res.data.comments)
         setPagination(res.data.pagination)
-
-        // 加载文章信息
         loadPostsInfo(res.data.comments)
       }
+      setSelectedIds(new Set())
     } catch (err) {
       console.error('Failed to load comments:', err)
     } finally {
@@ -51,13 +50,17 @@ export default function Comments() {
   const loadPostsInfo = async (commentsList) => {
     const postIds = [...new Set(commentsList.map(c => c.post_id))]
     const postsMap = {}
-    
+
     try {
       await Promise.all(
         postIds.map(async (postId) => {
-          const res = await postsAPI.getOne(postId)
-          if (res.success) {
-            postsMap[postId] = res.data
+          try {
+            const res = await postsAPI.getOne(postId)
+            if (res.success) {
+              postsMap[postId] = res.data
+            }
+          } catch {
+            postsMap[postId] = null
           }
         })
       )
@@ -78,7 +81,7 @@ export default function Comments() {
 
   const handleDelete = async (id) => {
     if (!window.confirm(lang('deleteConfirm'))) return
-    
+
     try {
       await commentsAPI.delete(id)
       loadComments()
@@ -91,20 +94,51 @@ export default function Comments() {
     setPagination(prev => ({ ...prev, page: newPage }))
   }
 
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const isAllSelected = comments.length > 0 && comments.every(c => selectedIds.has(c.id))
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(comments.map(c => c.id)))
+    }
+  }
+
+  const handleBatchSetStatus = async (status) => {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+
+    setBatchLoading(true)
+    try {
+      await commentsAPI.batchApprove(ids, status)
+      setSelectedIds(new Set())
+      loadComments()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   const getStatusBadge = (status) => {
     const badges = {
-      0: { text: lang('commentStatusPending'), className: 'bg-warning' },
+      0: { text: lang('commentStatusPending'), className: 'bg-warning text-dark' },
       1: { text: lang('commentStatusApproved'), className: 'bg-success' },
       2: { text: lang('commentStatusRejected'), className: 'bg-danger' }
     }
     return badges[status] || badges[0]
-  }
-
-  const getCommentCount = () => {
-    if (filter === 'all') {
-      return pagination.total
-    }
-    return comments.length
   }
 
   return (
@@ -130,6 +164,37 @@ export default function Comments() {
         </div>
       </div>
 
+      {/* Batch actions */}
+      {selectedIds.size > 0 && (
+        <div className="d-flex align-items-center gap-2 mb-3">
+          <span className="text-muted small">{selectedIds.size} 条</span>
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => handleBatchSetStatus(1)}
+            disabled={batchLoading}
+          >
+            <i className="bi bi-check-lg me-1"></i>
+            {lang('setApproved')}
+          </button>
+          <button
+            className="btn btn-sm btn-warning"
+            onClick={() => handleBatchSetStatus(0)}
+            disabled={batchLoading}
+          >
+            <i className="bi bi-clock me-1"></i>
+            {lang('setPending')}
+          </button>
+          <button
+            className="btn btn-sm btn-danger"
+            onClick={() => handleBatchSetStatus(2)}
+            disabled={batchLoading}
+          >
+            <i className="bi bi-x-lg me-1"></i>
+            {lang('setRejected')}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status">
@@ -147,6 +212,14 @@ export default function Comments() {
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
+                  <th style={{ width: '40px' }}>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={isAllSelected}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th style={{ width: '60px' }}>ID</th>
                   <th>{lang('commentContent')}</th>
                   <th style={{ width: '150px' }}>{lang('commentAuthor')}</th>
@@ -157,80 +230,98 @@ export default function Comments() {
                 </tr>
               </thead>
               <tbody>
-                {comments.map(comment => (
-                  <tr key={comment.id}>
-                    <td className="align-middle">{comment.id}</td>
-                    <td className="align-middle">
-                      <div className="text-truncate" style={{ maxWidth: '300px' }}>
-                        {comment.content}
-                      </div>
-                    </td>
-                    <td className="align-middle">
-                      <div>
-                        <strong>{comment.nickname}</strong>
-                        <br />
-                        <small className="text-muted">{comment.email}</small>
-                      </div>
-                    </td>
-                    <td className="align-middle">
-                      {posts[comment.post_id] ? (
-                        <Link 
-                          to={`/post/${comment.post_id}`} 
-                          target="_blank" 
-                          className="text-decoration-none"
-                        >
-                          {posts[comment.post_id].title}
-                        </Link>
-                      ) : (
-                        <span className="text-muted">{lang('commentPost')} #{comment.post_id}</span>
-                      )}
-                    </td>
-                    <td className="align-middle">
-                      <span className={`badge ${getStatusBadge(comment.status).className}`}>
-                        {getStatusBadge(comment.status).text}
-                      </span>
-                    </td>
-                    <td className="align-middle text-muted">
-                      <small>{comment.created_at?.split(' ')[0]}</small>
-                    </td>
-                    <td className="align-middle text-center">
-                      <div className="btn-group btn-group-sm">
-                        {comment.status === 0 && (
-                          <>
-                            <button 
-                              className="btn btn-outline-success"
-                              onClick={() => handleApprove(comment.id, 1)}
-                              title={lang('approveComment')}
+                {comments.map(comment => {
+                  const post = posts[comment.post_id]
+                  return (
+                    <tr key={comment.id}>
+                      <td className="align-middle">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={selectedIds.has(comment.id)}
+                          onChange={() => toggleSelect(comment.id)}
+                        />
+                      </td>
+                      <td className="align-middle">{comment.id}</td>
+                      <td className="align-middle">
+                        <div className="text-truncate" style={{ maxWidth: '300px' }}>
+                          {comment.content}
+                        </div>
+                      </td>
+                      <td className="align-middle">
+                        <div>
+                          <strong>{comment.nickname}</strong>
+                          <br />
+                          <small className="text-muted">{comment.email}</small>
+                        </div>
+                      </td>
+                      <td className="align-middle">
+                        {post ? (
+                          <span className="d-flex align-items-center gap-1">
+                            <Link
+                              to={`/post/${comment.post_id}`}
+                              target="_blank"
+                              className="text-decoration-none"
                             >
-                              <i className="bi bi-check-lg"></i>
-                            </button>
-                            <button 
-                              className="btn btn-outline-danger"
-                              onClick={() => handleApprove(comment.id, 2)}
-                              title={lang('rejectComment')}
-                            >
-                              <i className="bi bi-x-lg"></i>
-                            </button>
-                          </>
+                              {post.title}
+                            </Link>
+                            {post.active != 1 && (
+                              <span className="badge bg-secondary" style={{ fontSize: '0.65rem' }}>{lang('unpublish')}</span>
+                            )}
+                          </span>
+                        ) : post === null ? (
+                          <span className="text-muted">{lang('commentPost')} #{comment.post_id}</span>
+                        ) : (
+                          <small className="text-muted">...</small>
                         )}
-                        <button 
-                          className="btn btn-outline-danger"
-                          onClick={() => handleDelete(comment.id)}
-                          title={lang('delete')}
-                        >
-                          <i className="bi bi-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="align-middle">
+                        <span className={`badge ${getStatusBadge(comment.status).className}`}>
+                          {getStatusBadge(comment.status).text}
+                        </span>
+                      </td>
+                      <td className="align-middle text-muted">
+                        <small>{comment.created_at?.split(' ')[0]}</small>
+                      </td>
+                      <td className="align-middle text-center">
+                        <div className="btn-group btn-group-sm">
+                          {comment.status === 0 && (
+                            <>
+                              <button
+                                className="btn btn-outline-success"
+                                onClick={() => handleApprove(comment.id, 1)}
+                                title={lang('approveComment')}
+                              >
+                                <i className="bi bi-check-lg"></i>
+                              </button>
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleApprove(comment.id, 2)}
+                                title={lang('rejectComment')}
+                              >
+                                <i className="bi bi-x-lg"></i>
+                              </button>
+                            </>
+                          )}
+                          <button
+                            className="btn btn-outline-danger"
+                            onClick={() => handleDelete(comment.id)}
+                            title={lang('delete')}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      <Pager 
+      <Pager
         page={pagination.page}
         totalPages={pagination.totalPages}
         onPageChange={handlePageChange}
