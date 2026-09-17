@@ -68,5 +68,6 @@ try {
     success(null, 'User deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to delete user: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to delete user: ' . $e->getMessage());
+    serverError('Failed to delete user');
 }

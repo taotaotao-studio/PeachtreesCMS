@@ -47,5 +47,6 @@ try {
     ], 'Comment deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to delete comment: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to delete comment: ' . $e->getMessage());
+    serverError('Failed to delete comment');
 }

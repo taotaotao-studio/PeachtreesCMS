@@ -69,5 +69,6 @@ try {
     success(null, 'Password changed successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to change password: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to change password: ' . $e->getMessage());
+    serverError('Failed to change password');
 }

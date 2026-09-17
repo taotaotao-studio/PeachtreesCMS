@@ -55,5 +55,6 @@ try {
     ], 'Comments updated');
 
 } catch (PDOException $e) {
-    serverError('Failed to batch update comments: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to batch update comments: ' . $e->getMessage());
+    serverError('Failed to batch update comments');
 }

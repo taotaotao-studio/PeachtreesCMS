@@ -29,5 +29,6 @@ try {
         'styles' => $styles
     ], 'Style list retrieved successfully');
 } catch (PDOException $e) {
-    serverError('Failed to get style list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get style list: ' . $e->getMessage());
+    serverError('Failed to get style list');
 }

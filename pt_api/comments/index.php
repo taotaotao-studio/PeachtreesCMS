@@ -111,19 +111,36 @@ try {
         $rootComments = [];
 
         foreach ($comments as $comment) {
-            $commentMap[$comment['id']] = $comment;
+            // Build the map entry FIRST. Assigning to $commentMap[...] and then
+            // mutating $comment only edits a local copy (value semantics), so
+            // `replies` / `can_reply` used to never reach the response at all.
             $comment['replies'] = [];
             $comment['can_reply'] = true; // Whether can reply
+            $commentMap[$comment['id']] = $comment;
         }
 
         foreach ($comments as $comment) {
-            if ($comment['parent_id'] === null) {
+            // A comment is a root when it carries no parent. `comments/create.php`
+            // stores NULL for top-level comments, but rows imported from elsewhere
+            // may carry 0 or '', so treat every empty form as "no parent".
+            $parentId = $comment['parent_id'];
+            $hasParent = $parentId !== null && $parentId !== '' && (int)$parentId > 0;
+
+            if (!$hasParent) {
                 $rootComments[] = &$commentMap[$comment['id']];
-            } else {
-                if (isset($commentMap[$comment['parent_id']])) {
-                    $commentMap[$comment['parent_id']]['replies'][] = &$commentMap[$comment['id']];
-                }
+                continue;
             }
+
+            if (isset($commentMap[$parentId])) {
+                $commentMap[$parentId]['replies'][] = &$commentMap[$comment['id']];
+                continue;
+            }
+
+            // Parent is missing — deleted, or simply not on this page. Previously
+            // the branch had no `else`, so such comments were dropped silently.
+            // Surface them as root nodes flagged `orphan` instead of losing them.
+            $commentMap[$comment['id']]['orphan'] = true;
+            $rootComments[] = &$commentMap[$comment['id']];
         }
 
         $finalComments = $rootComments;
@@ -141,5 +158,6 @@ try {
     ], 'Comment list retrieved successfully');
 
 } catch (PDOException $e) {
-    serverError('Failed to get comment list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get comment list: ' . $e->getMessage());
+    serverError('Failed to get comment list');
 }

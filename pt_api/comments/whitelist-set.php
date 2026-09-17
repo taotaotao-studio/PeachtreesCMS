@@ -89,6 +89,7 @@ try {
         'expires_at' => $expiresAtValue,
     ], 'Whitelist status updated');
 } catch (PDOException $e) {
-    serverError('Failed to set whitelist: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to set whitelist: ' . $e->getMessage());
+    serverError('Failed to set whitelist');
 }
 

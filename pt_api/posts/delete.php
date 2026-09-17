@@ -65,5 +65,6 @@ try {
     success(null, 'Post deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to delete post: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to delete post: ' . $e->getMessage());
+    serverError('Failed to delete post');
 }

@@ -74,17 +74,37 @@
 * **完成清理**：安装成功后，请根据页面提示，**删除 `pt_api/install.php`** 以及 **根目录下的 `data-init.sql`** 文件，以确保生产环境安全。
 
 ### 3. Nginx 敏感文件防护
-如果您使用的是 Nginx 服务器，请在您的 Nginx `server {}` 块中加入以下黄金规则，以彻底阻断 `.env` 或 `.git` 等隐藏敏感文件被公开下载：
+如果您使用的是 Nginx 服务器，请在您的 Nginx `server {}` 块中加入以下**两条**黄金规则。只加第一条是不够的：
 
 ```nginx
-# 拒绝访问所有以点 (.) 开头的隐藏敏感文件或目录（如 .env, .installed, .git）
+# ① 拒绝访问所有以点 (.) 开头的隐藏敏感文件或目录（如 .env, .installed, .git）
 location ~ /\. {
     deny all;
     return 404;
     log_not_found off;
     access_log off;
 }
+
+# ② 拒绝访问运行时数据目录 —— 这条不能省。
+# pt_api/sessions/ 没有前导点，① 匹配不到它；它也不以 .php 结尾，
+# 因此不会命中 PHP location，最终会作为静态文件被原样吐出。
+# 会话文件里存着【明文验证码答案】、文件名就是 session id，
+# 一旦可读则验证码形同虚设。
+location ~ ^/.*?pt_api/(sessions|rate_limits)(/|$) {
+    deny all;
+    return 404;
+    log_not_found off;
+    access_log off;
+}
 ```
+
+> ⚠️ **Apache 用户请注意**：仓库自带的 `.htaccess` 与 `pt_api/sessions/.htaccess` 已包含上述拒绝规则，但 `.htaccess` **仅在 Apache 且 `AllowOverride` 允许时生效**。用 Nginx 时必须在 `server {}` 里显式配置，仓库里的 `.htaccess` 对 Nginx 完全不起作用。
+>
+> 💡 **最强防护（可选）**：在 `pt_api/.env` 中设置 `SESSION_DIR` 把会话目录**移出 Web 根目录**，例如：
+> ```ini
+> SESSION_DIR=/var/www/php/sessions
+> ```
+> 这样即使服务器规则配置有误，会话文件也无法通过 URL 访问。
 
 ---
 
@@ -128,8 +148,11 @@ pnpm package
 该脚本会自动：
 1. 安装并编译前端，输出生产资源。
 2. 创建暂存区，自动拼装、合并前端 HTML/CSS/JS、公共资源和 `pt_api/` 后端文件。
-3. **安全过滤**：自动剔除开发产生的 `pt_api/.env`、安装锁文件 `pt_api/.installed` 以及会话日志。
+3. **安全过滤**：自动剔除开发产生的 `pt_api/.env`、`.env.local` 等本地环境文件、安装锁文件 `pt_api/.installed` 以及会话数据（`pt_api/sessions/` 下的会话文件，保留其 `.htaccess` 守卫）。
 4. **一键压缩**：调用系统原生 zip 工具，在项目根目录下生成开箱即用的 `release.zip`。
+5. **发布前自检**：回读压缩包并逐项断言（敏感文件必须缺席、`.htaccess` 等必需文件必须在位）。任一不满足会**删除 `release.zip` 并以非零码退出**，避免发出"脏包"。
+
+> 仅需重新打包、复用已有前端产物时，可设置 `PT_SKIP_BUILD=1` 跳过第 1 步（例如 `PT_SKIP_BUILD=1 pnpm package` 或 `PT_SKIP_BUILD=1 node scripts/package.js`）。
 
 ---
 This project uses a custom non-commercial license. See LICENSE file for details.

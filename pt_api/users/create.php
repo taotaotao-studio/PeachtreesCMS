@@ -86,5 +86,6 @@ try {
     ], 'User created successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to create user: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to create user: ' . $e->getMessage());
+    serverError('Failed to create user');
 }

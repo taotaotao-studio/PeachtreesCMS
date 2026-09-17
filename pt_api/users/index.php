@@ -28,5 +28,6 @@ try {
     success($users);
     
 } catch (PDOException $e) {
-    serverError('Failed to get user list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get user list: ' . $e->getMessage());
+    serverError('Failed to get user list');
 }

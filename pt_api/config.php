@@ -179,10 +179,47 @@ function getDB(): PDO {
 
 // Start Session
 if (session_status() === PHP_SESSION_NONE) {
-    $sessionPath = __DIR__ . '/sessions';
+    // Session storage directory.
+    //
+    // SECURITY: session files contain a PLAINTEXT captcha answer, and the file
+    // name is the session id — if the web server ever serves this directory as
+    // static content, the captcha is bypassed entirely. Three layers guard it:
+    //
+    //   1. the web-server rules in <site root>/.htaccess and the nginx example
+    //      (both deny /pt_api/sessions/);
+    //   2. the deny-all .htaccess auto-written into the directory below;
+    //   3. this SESSION_DIR override, which lets production move the directory
+    //      OUTSIDE the web root altogether (strongest option).
+    //
+    // Set SESSION_DIR in .env to an absolute path (recommended: a sibling of
+    // the site root, e.g. /var/www/php/sessions) or a path relative to the
+    // project root. Defaults to pt_api/sessions for backwards compatibility.
+    $sessionPath = $_ENV['SESSION_DIR'] ?? '';
+    if ($sessionPath === '') {
+        $sessionPath = __DIR__ . '/sessions';
+    } else {
+        $sessionPath = rtrim($sessionPath, '/\\');
+        if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $sessionPath)) {
+            $sessionPath = $projectRoot . '/' . $sessionPath;
+        }
+    }
+
     if (!is_dir($sessionPath)) {
         @mkdir($sessionPath, 0755, true);
     }
+
+    // Layer 2: drop a deny-all .htaccess so the files are never handed out as
+    // static content, even on a host whose root .htaccess does not apply.
+    // (Ignored harmlessly when AllowOverride forbids authentication directives.)
+    if (is_dir($sessionPath)) {
+        $sessionGuard = $sessionPath . '/.htaccess';
+        if (!file_exists($sessionGuard)) {
+            @file_put_contents($sessionGuard,
+                "<IfModule mod_authz_core.c>\n  Require all denied\n</IfModule>\n" .
+                "<IfModule !mod_authz_core.c>\n  Order allow,deny\n  Deny from all\n</IfModule>\n");
+        }
+    }
+
     if (is_dir($sessionPath)) {
         session_save_path($sessionPath);
     }

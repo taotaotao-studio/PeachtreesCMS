@@ -344,5 +344,6 @@ try {
     if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    serverError('Import failed: ' . $e->getMessage());
+    error_log('[peachtrees] Import failed: ' . $e->getMessage());
+    serverError('Import failed');
 }

@@ -24,5 +24,6 @@ try {
     
     success($options);
 } catch (PDOException $e) {
-    serverError('Failed to get settings: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get settings: ' . $e->getMessage());
+    serverError('Failed to get settings');
 }

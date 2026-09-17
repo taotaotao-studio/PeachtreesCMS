@@ -51,5 +51,6 @@ try {
         'files' => $files
     ], 'Media list retrieved successfully');
 } catch (PDOException $e) {
-    serverError('Failed to get media list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get media list: ' . $e->getMessage());
+    serverError('Failed to get media list');
 }

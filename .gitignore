@@ -7,6 +7,9 @@ pt_frontend/dist
 .vscode
 .reasonix
 
+# Local agent workspace (memory logs, session state)
+.workbuddy/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -17,9 +20,9 @@ OPTIMIZATION-SUGGESTIONS.md
 # Logs
 *.log
 
-# sessions
+# sessions — runtime data, never commit; the deny-all .htaccess MUST be tracked
 pt_api/sessions/*
-pt_api/rate_limits/*
+!pt_api/sessions/.htaccess
 
 # Environment (contains real credentials — never commit)
 pt_frontend/.env

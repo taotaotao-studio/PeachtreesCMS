@@ -122,5 +122,6 @@ if ($postType === 'big-picture' && count($coverMedia) === 0) {
     ], 'Post created successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to create post: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to create post: ' . $e->getMessage());
+    serverError('Failed to create post');
 }

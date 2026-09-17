@@ -145,5 +145,6 @@ try {
     ], $successMessage);
     
 } catch (PDOException $e) {
-    serverError('Failed to create comment: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to create comment: ' . $e->getMessage());
+    serverError('Failed to create comment');
 }

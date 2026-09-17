@@ -64,5 +64,6 @@ try {
     ], 'Tag created successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to create tag: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to create tag: ' . $e->getMessage());
+    serverError('Failed to create tag');
 }

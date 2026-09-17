@@ -35,8 +35,13 @@ if (str_starts_with($path, 'upload/')) {
 
 $fullPath = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
 $realPath = realpath($fullPath);
-$uploadRoot = realpath(UPLOAD_DIR);
-if ($realPath === false || $uploadRoot === false || strpos($realPath, $uploadRoot) !== 0) {
+// The containment check MUST be anchored on a directory boundary. A bare string
+// prefix comparison (strpos($realPath, $uploadRoot) === 0) also accepts siblings
+// whose names merely START with the upload dir — e.g. `upload_backup/` or
+// `uploads-old/` — which live outside the media directory and must be rejected.
+$uploadRoot = rtrim((string) realpath(UPLOAD_DIR), DIRECTORY_SEPARATOR);
+if ($realPath === false || $uploadRoot === '' ||
+    ($realPath !== $uploadRoot && !str_starts_with($realPath, $uploadRoot . DIRECTORY_SEPARATOR))) {
     error('Invalid file path');
 }
 
@@ -59,8 +64,11 @@ try {
 
 // Clean up empty directories (up to upload root)
 $currentDir = dirname($realPath);
-$mediaRoot = realpath(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR));
-while ($mediaRoot && strpos($currentDir, $mediaRoot) === 0 && $currentDir !== $mediaRoot) {
+$mediaRoot = rtrim((string) realpath(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR)), DIRECTORY_SEPARATOR);
+// Same boundary requirement as above. Appending DIRECTORY_SEPARATOR also makes an
+// explicit `$currentDir !== $mediaRoot` guard redundant: equality can never
+// satisfy a "root + separator" prefix, so the loop stops at the root on its own.
+while ($mediaRoot !== '' && str_starts_with($currentDir, $mediaRoot . DIRECTORY_SEPARATOR)) {
     $items = scandir($currentDir);
     if ($items && count($items) === 2) {
         @rmdir($currentDir);

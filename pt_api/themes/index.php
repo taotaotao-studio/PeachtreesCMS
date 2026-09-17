@@ -33,5 +33,6 @@ try {
         'themes' => $themes
     ], 'Theme list retrieved successfully');
 } catch (PDOException $e) {
-    serverError('Failed to get theme list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get theme list: ' . $e->getMessage());
+    serverError('Failed to get theme list');
 }

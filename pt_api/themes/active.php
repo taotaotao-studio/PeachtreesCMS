@@ -27,5 +27,6 @@ try {
     $theme['css_url'] = themePublicCssUrl($theme['slug'], $theme['entry_css']);
     success($theme, 'Active theme retrieved successfully');
 } catch (PDOException $e) {
-    serverError('Failed to get active theme: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get active theme: ' . $e->getMessage());
+    serverError('Failed to get active theme');
 }

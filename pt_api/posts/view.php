@@ -81,5 +81,6 @@ try {
     success($post);
 
 } catch (PDOException $e) {
-    serverError('Failed to get post: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get post: ' . $e->getMessage());
+    serverError('Failed to get post');
 }

@@ -124,5 +124,6 @@ try {
     success(null, 'User profile updated successfully');
 
 } catch (PDOException $e) {
-    serverError('Failed to update user profile: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to update user profile: ' . $e->getMessage());
+    serverError('Failed to update user profile');
 }

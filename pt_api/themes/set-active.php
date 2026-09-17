@@ -43,5 +43,6 @@ try {
         'slug' => $slug
     ], 'Theme switched successfully');
 } catch (PDOException $e) {
-    serverError('Failed to switch theme: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to switch theme: ' . $e->getMessage());
+    serverError('Failed to switch theme');
 }

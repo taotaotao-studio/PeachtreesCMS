@@ -60,5 +60,6 @@ try {
     ], $newActive == 1 ? 'Post published' : 'Post unpublished');
     
 } catch (PDOException $e) {
-    serverError('Failed to toggle post status: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to toggle post status: ' . $e->getMessage());
+    serverError('Failed to toggle post status');
 }

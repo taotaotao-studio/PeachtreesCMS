@@ -42,6 +42,18 @@ server {
         access_log off;
     }
 
+    # 拒绝访问运行时数据目录。
+    # 注意：下面的 dotfile 规则匹配不到 pt_api/sessions/ —— 它没有前导点，
+    # 且不以 .php 结尾（因此也不会命中下面的 PHP location），最终会落到静态
+    # 文件分支被原样吐出。会话文件里存着【明文验证码答案】，文件名就是 session id，
+    # 一旦可读则验证码形同虚设。必须显式拒绝（.htaccess 与 nginx 都要有）。
+    location ~ ^/blog/pt_api/(sessions|rate_limits)(/|$) {
+        deny all;
+        return 404;
+        log_not_found off;
+        access_log off;
+    }
+
     # PHP 处理 — PHP 文件在 web root 之外，通过绝对路径指定
     location ~ ^/blog/pt_api/(.+\.php)$ {
         fastcgi_pass unix:/var/run/php/php-fpm.sock;

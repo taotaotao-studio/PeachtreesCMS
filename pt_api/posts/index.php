@@ -88,7 +88,7 @@ try {
         }
     }
     
-    success([
+    $response = [
         'posts' => $posts,
         'pagination' => [
             'page' => $page,
@@ -96,14 +96,23 @@ try {
             'total' => intval($total),
             'totalPages' => ceil($total / $perPage)
         ],
-        '_debug' => [
+    ];
+
+    // Diagnostic payload — opt-in only. This endpoint is public and anonymous, so
+    // its internals (the resolved WHERE clause, raw counts) must not leak by
+    // default. Enable with APP_DEBUG=1 in pt_api/.env when debugging locally.
+    if (filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+        $response['_debug'] = [
             'tag' => $tag,
             'showInactive' => $showInactive,
             'where' => $whereClause,
             'total_raw' => $total
-        ]
-    ]);
+        ];
+    }
+
+    success($response);
     
 } catch (PDOException $e) {
-    serverError('Failed to get post list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get post list: ' . $e->getMessage());
+    serverError('Failed to get post list');
 }

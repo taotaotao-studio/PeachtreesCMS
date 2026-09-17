@@ -20,7 +20,7 @@ requireAdmin();
 // Get input
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input || !is_array($input)) {
-    badRequest('Invalid settings data');
+    error('Invalid settings data', 400);
 }
 
 try {
@@ -39,5 +39,6 @@ try {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
-    serverError('Failed to save settings: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to save settings: ' . $e->getMessage());
+    serverError('Failed to save settings');
 }

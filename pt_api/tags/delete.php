@@ -59,5 +59,6 @@ try {
     success(null, 'Tag deleted successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to delete tag: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to delete tag: ' . $e->getMessage());
+    serverError('Failed to delete tag');
 }

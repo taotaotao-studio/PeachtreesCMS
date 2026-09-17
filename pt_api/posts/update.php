@@ -181,5 +181,6 @@ try {
     ], 'Post updated successfully');
 
 } catch (PDOException $e) {
-    serverError('Failed to update post: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to update post: ' . $e->getMessage());
+    serverError('Failed to update post');
 }

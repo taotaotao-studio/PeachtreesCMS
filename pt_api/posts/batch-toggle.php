@@ -58,5 +58,6 @@ try {
     ], $active == 1 ? 'Posts published' : 'Posts unpublished');
 
 } catch (PDOException $e) {
-    serverError('Failed to batch toggle posts: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to batch toggle posts: ' . $e->getMessage());
+    serverError('Failed to batch toggle posts');
 }

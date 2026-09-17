@@ -212,5 +212,6 @@ try {
     echo $dom->saveXML();
     exit;
 } catch (PDOException $e) {
-    serverError('Export failed: ' . $e->getMessage());
+    error_log('[peachtrees] Export failed: ' . $e->getMessage());
+    serverError('Export failed');
 }

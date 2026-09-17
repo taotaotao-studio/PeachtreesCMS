@@ -93,5 +93,6 @@ try {
     }
     
 } catch (PDOException $e) {
-    serverError('Failed to update tag: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to update tag: ' . $e->getMessage());
+    serverError('Failed to update tag');
 }

@@ -116,5 +116,6 @@ try {
     ], 'Comment reviewed successfully');
     
 } catch (PDOException $e) {
-    serverError('Failed to review comment: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to review comment: ' . $e->getMessage());
+    serverError('Failed to review comment');
 }

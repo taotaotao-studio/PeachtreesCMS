@@ -23,5 +23,6 @@ try {
     success($tags);
     
 } catch (PDOException $e) {
-    serverError('Failed to get tag list: ' . $e->getMessage());
+    error_log('[peachtrees] Failed to get tag list: ' . $e->getMessage());
+    serverError('Failed to get tag list');
 }
