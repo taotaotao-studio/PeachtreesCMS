@@ -19,6 +19,7 @@ OPTIMIZATION-SUGGESTIONS.md
 
 # sessions
 pt_api/sessions/*
+pt_api/rate_limits/*
 
 # Environment (contains real credentials — never commit)
 pt_frontend/.env
