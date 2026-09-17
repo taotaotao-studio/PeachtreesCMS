@@ -2,7 +2,6 @@
 pt_frontend/node_modules
 pt_frontend/public/upload
 pt_frontend/dist
-nginx-conf-debian
 
 # IDE
 .vscode
@@ -11,6 +10,9 @@ nginx-conf-debian
 # OS
 .DS_Store
 Thumbs.db
+
+# docs
+OPTIMIZATION-SUGGESTIONS.md
 
 # Logs
 *.log
