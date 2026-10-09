@@ -43,9 +43,6 @@ function makeEnv(array $config): string {
     $lines[] = 'DB_USER=' . $config['DB_USER'];
     $lines[] = 'DB_PASS=' . $config['DB_PASS'];
     $lines[] = '';
-    $lines[] = '# JWT Secret (must be changed to a strong random string)';
-    $lines[] = 'JWT_SECRET=' . $config['JWT_SECRET'];
-    $lines[] = '';
     $lines[] = '# Upload directory (optional, leave empty for default; absolute path or relative to project root)';
     $lines[] = 'UPLOAD_DIR=';
     $lines[] = '';
@@ -275,8 +272,7 @@ if ($action === 'install' && empty($errors)) {
                     'DB_HOST' => $form['db_host'],
                     'DB_NAME' => $form['db_name'],
                     'DB_USER' => $form['db_user'],
-                    'DB_PASS' => $form['db_pass'],
-                    'JWT_SECRET' => bin2hex(random_bytes(32))
+                    'DB_PASS' => $form['db_pass']
                 ]);
                 file_put_contents($envPath, $env);
 

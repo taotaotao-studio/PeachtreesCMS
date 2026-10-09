@@ -66,9 +66,6 @@ define('DB_USER', $_ENV['DB_USER'] ?? 'root');
 define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 define('DB_CHARSET', 'utf8mb4');
 
-// JWT configuration — change secret in .env for production
-define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? 'dev-only-insecure-key-CHANGE-ME');
-define('JWT_EXPIRE', 86400);
 // Timezone setting
 date_default_timezone_set('Asia/Shanghai');
 

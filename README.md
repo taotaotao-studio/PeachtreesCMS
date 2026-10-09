@@ -10,7 +10,7 @@
 - PHP 8.1+ (PDO)
 - MySQL 5.7+ (支持 5.7/8.0 及以上，已解决 1215 约束顺序问题)
 - RESTful API
-- JWT 认证
+- Session 认证（基于 PHP Session + 数据库 fail-closed 验证）
 
 ### 前端
 - Vite 6.x / 8.x (Rolldown)
@@ -70,7 +70,7 @@
 ### 2. 运行安装程序
 在浏览器中访问：`http://your-domain.com/your-path/pt_api/install.php`
 * **环境检测**：安装器会自动对 PHP 版本、PDO 扩展、Fileinfo 扩展，以及 `pt_api/`、`upload/`、`theme/`、`pattern/` 文件夹的可写权限进行绿灯检测。
-* **安全配置**：安装程序在写入配置时，会自动为您的站点生成 256 位的高强度随机 `JWT_SECRET`。
+* **安全配置**：安装程序在写入配置时，会自动生成安全的数据库配置与环境文件。
 * **完成清理**：安装成功后，请根据页面提示，**删除 `pt_api/install.php`** 以及 **根目录下的 `data-init.sql`** 文件，以确保生产环境安全。
 
 ### 3. Nginx 敏感文件防护

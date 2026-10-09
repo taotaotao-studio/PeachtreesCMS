@@ -30,7 +30,7 @@ if (in_array($origin, $allowedOrigins, strict: true)) {
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
 // Allowed request headers
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, X-Requested-With");
 
 // Allow credentials (cookies)
 header("Access-Control-Allow-Credentials: true");
