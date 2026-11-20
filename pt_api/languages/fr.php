@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'Extension PDO MySQL',
     'install.req_fileinfo' => 'Extension Fileinfo',
     'install.req_writable_api' => 'Répertoire pt_api/ accessible en écriture (pour la configuration)',
-    'install.req_writable_upload' => 'Répertoire upload/ accessible en écriture (pour les téléversements)',
-    'install.req_writable_theme' => 'Répertoire theme/ accessible en écriture (pour la configuration du thème)',
-    'install.req_writable_pattern' => 'Répertoire pattern/ accessible en écriture (pour les styles de page)',
+    'install.req_writable_upload' => 'Répertoire content/uploads/ accessible en écriture (pour les téléversements)',
+    'install.req_writable_theme' => 'Répertoire content/themes/ accessible en écriture (pour la configuration du thème)',
+    'install.req_writable_pattern' => 'Répertoire content/patterns/ accessible en écriture (pour les styles de page)',
     'install.req_pass' => 'Toutes les exigences sont satisfaites',
     'install.req_fail' => 'Certaines exigences ne sont pas satisfaites. Veuillez résoudre le problème et actualiser la page.',
     

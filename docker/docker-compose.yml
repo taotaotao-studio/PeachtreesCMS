@@ -1,0 +1,50 @@
+# PeachtreesCMS — one-command deployment
+#
+#   cp is handled automatically: the app container generates pt_api/.env from
+#   the environment on first start. Change the DB_* values below (or use an
+#   env_file) before going to production.
+#
+#   docker compose up -d
+#   → open http://localhost:8080/pt_api/install.php and run the installer
+#
+# Upgrade:  docker compose pull && docker compose up -d
+# (content/ lives on the content_data volume and survives every upgrade)
+
+services:
+  app:
+    image: taotaotao-studio/peachtrees-cms:latest
+    # For local development of the image itself, comment `image` and use:
+    # build:
+    #   context: ..
+    #   dockerfile: docker/Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: peachtrees
+      DB_USER: peachtrees
+      # ⚠️ change this before production use
+      DB_PASS: change-me
+      # Optional: override the updater source ("owner/repo")
+      # UPDATE_REPO: taotaotao-studio/PeachtreesCMS
+    volumes:
+      - content_data:/var/www/html/content
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    # The CMS supports MySQL 5.7+ — pin 5.7 if your host requires it.
+    environment:
+      MYSQL_DATABASE: peachtrees
+      MYSQL_USER: peachtrees
+      MYSQL_PASSWORD: change-me
+      MYSQL_ROOT_PASSWORD: change-me-root
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  content_data:
+  db_data:

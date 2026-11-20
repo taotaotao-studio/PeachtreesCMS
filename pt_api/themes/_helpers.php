@@ -1,7 +1,7 @@
 <?php
 
 function themesBaseDir(): string {
-    $dir = defined('THEME_DIR') ? THEME_DIR : (__DIR__ . '/../theme');
+    $dir = defined('THEME_DIR') ? THEME_DIR : (__DIR__ . '/../content/themes');
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
@@ -13,7 +13,7 @@ function isValidThemeSlug(string $slug): bool {
 }
 
 function themePublicCssUrl(string $slug, string $entryCss): string {
-    return '/theme/' . rawurlencode($slug) . '/' . ltrim($entryCss, '/');
+    return THEMES_REL_PREFIX . '/' . rawurlencode($slug) . '/' . ltrim($entryCss, '/');
 }
 
 function scanThemePackages(PDO $pdo): void {

@@ -1,7 +1,7 @@
 <?php
 
 function stylesBaseDir(): string {
-    $dir = defined('STYLE_DIR') ? STYLE_DIR : (__DIR__ . '/../pattern');
+    $dir = defined('STYLE_DIR') ? STYLE_DIR : (__DIR__ . '/../content/patterns');
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
@@ -13,7 +13,7 @@ function isValidStyleSlug(string $slug): bool {
 }
 
 function stylePublicCssUrl(string $slug, string $entryCss = 'style.css'): string {
-    return '/pattern/' . rawurlencode($slug) . '/' . ltrim($entryCss, '/');
+    return PATTERNS_REL_PREFIX . '/' . rawurlencode($slug) . '/' . ltrim($entryCss, '/');
 }
 
 /**
@@ -105,7 +105,7 @@ function doScanStylePackages(PDO $pdo, string $baseDir): void {
                 }
                 $thumb = trim($decoded['thumbnail'] ?? '');
                 if ($thumb !== '') {
-                    $meta['thumbnail'] = '/pattern/' . $slug . '/' . ltrim($thumb, '/');
+                    $meta['thumbnail'] = PATTERNS_REL_PREFIX . '/' . $slug . '/' . ltrim($thumb, '/');
                 }
             }
         }

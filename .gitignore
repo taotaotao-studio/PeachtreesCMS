@@ -1,6 +1,6 @@
 # Dependencies
 pt_frontend/node_modules
-pt_frontend/public/upload
+pt_frontend/public/content/uploads
 pt_frontend/dist
 
 # IDE

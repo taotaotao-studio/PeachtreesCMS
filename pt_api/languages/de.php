@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'PDO MySQL Erweiterung',
     'install.req_fileinfo' => 'Fileinfo Erweiterung',
     'install.req_writable_api' => 'pt_api/ Verzeichnis beschreibbar (für Konfiguration)',
-    'install.req_writable_upload' => 'upload/ Verzeichnis beschreibbar (für Uploads)',
-    'install.req_writable_theme' => 'theme/ Verzeichnis beschreibbar (für Theme-Konfiguration)',
-    'install.req_writable_pattern' => 'pattern/ Verzeichnis beschreibbar (für Seitenstile)',
+    'install.req_writable_upload' => 'content/uploads/ Verzeichnis beschreibbar (für Uploads)',
+    'install.req_writable_theme' => 'content/themes/ Verzeichnis beschreibbar (für Theme-Konfiguration)',
+    'install.req_writable_pattern' => 'content/patterns/ Verzeichnis beschreibbar (für Seitenstile)',
     'install.req_pass' => 'Alle Anforderungen erfüllt',
     'install.req_fail' => 'Einige Anforderungen sind nicht erfüllt. Bitte beheben Sie das Problem und laden Sie die Seite neu.',
     

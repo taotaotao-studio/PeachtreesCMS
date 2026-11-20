@@ -97,7 +97,7 @@ function syncMediaLibrary(PDO $pdo): void {
             continue;
         }
 
-        $relativePath = 'upload/' . str_replace('\\', '/', substr($file->getPathname(), strlen($baseDir) + 1));
+        $relativePath = UPLOAD_REL_PREFIX . '/' . str_replace('\\', '/', substr($file->getPathname(), strlen($baseDir) + 1));
         if (isset($existing[$relativePath])) {
             continue;
         }
@@ -114,7 +114,7 @@ function syncMediaLibrary(PDO $pdo): void {
     $rows = $stmt ? $stmt->fetchAll() : [];
     $orphans = [];
     foreach ($rows as $row) {
-        $rel = preg_replace('#^upload/#', '', str_replace('\\', '/', $row['path']));
+        $rel = preg_replace('#^(?:content/uploads|upload)/#', '', str_replace('\\', '/', $row['path']));
         $abs = rtrim(UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
         if (!is_file($abs)) {
             $orphans[] = (int)$row['id'];

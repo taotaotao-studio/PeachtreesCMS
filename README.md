@@ -36,6 +36,7 @@
 - **开箱即用，免 Node 编译**：提供免编译的发布包，前端静态资源采用自适应路径设计，解压即用。
 - **多语言内置支持**：系统安装器与管理后台完美支持 **简体中文、English、日本語、Deutsch、Français、Español** 六国语言，并支持根据浏览器语言自动切换。
 - **数据导入导出**：支持 WordPress WXR 格式 XML 一键导入导出，完美同步分类、文章和评论。
+- **一键更新**：后台内置系统更新通道（更新源为 GitHub Releases）；升级只替换程序文件，`content/` 用户内容目录永远保留。
 - **RSS 订阅**：内置 RSS Feed 自动生成。
 - **评论管理**：支持审核制、可信邮箱自动通过白名单、敏感邮箱封禁。
 - **主题与风格管理**：支持自定义页面风格与主题布局。
@@ -57,13 +58,14 @@
 ├── assets/                       # 静态 JS/CSS 资源
 ├── imgs/                         # 静态图片，含用户头像
 ├── languages/                    # 前端多语言包 (.json)
-├── theme/                        # 主题文件
-├── pattern/                      # 风格文件
-├── upload/                       # 附件上传文件夹（已带 .gitkeep 确保打包完整）
+├── content/                      # ★ 用户内容目录（类似 WordPress 的 wp-content）
+│   ├── uploads/                  # 附件上传
+│   ├── themes/                   # 主题包
+│   └── patterns/                 # 页面风格
 ├── .htaccess                     # Apache 安全防护与重写规则
 └── pt_api/                       # PHP 后端
     ├── install.php               # 安装向导
-    ├── .env.example              # 分离安装路径覆盖模板
+    ├── .env.example              # 环境配置模板（支持 CONTENT_DIR 路径覆盖）
     └── ...                       # 其他后端核心代码
 ```
 
@@ -108,9 +110,51 @@ location ~ ^/.*?pt_api/(sessions|rate_limits)(/|$) {
 
 ---
 
+## Docker 部署
+
+提供官方容器镜像（`php:8.2-apache` + 预构建前端，支持 amd64/arm64）：
+
+```bash
+cd docker
+docker compose up -d
+# 打开 http://localhost:8080/pt_api/install.php 完成安装向导
+```
+
+- **数据卷**：`content_data`（用户内容目录）+ `db_data`（MySQL 8.0）；升级只需 `docker compose pull && docker compose up -d`，数据永不丢失。
+- **首次启动**：容器自动生成 `pt_api/.env`（数据库连接来自 compose 环境变量），并把 sessions 移出 web root。
+- **镜像发布**：打 `v*` tag 时 GitHub Actions 自动构建多架构镜像并推送 Docker Hub（`taotaotao-studio/peachtrees-cms`）；需在仓库 Secrets 配置 `DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`。
+
+详见 [docker/docker-compose.yml](docker/docker-compose.yml) 与 [docker/Dockerfile](docker/Dockerfile)。
+
+---
+
+## 升级与更新
+
+所有部署形态共用同一条升级规则：**替换代码文件，保留 `content/`**。
+
+**方式一：后台一键更新（推荐）**
+
+登录后台 → 系统设置 → 系统更新，点击"检查更新"；检测到新版本后一键安装。后端会自动从 GitHub Releases 下载 `release.zip`、回读自检（必需文件在位、敏感文件缺席）、然后覆盖程序文件——`content/`（附件、主题、风格）、`pt_api/.env`、`.installed`、sessions **永不被覆盖**；主题与风格按目录增量投放（已有修改保留，新包自动送达）。
+
+> 更新源默认 `taotaotao-studio/PeachtreesCMS`，可在 `pt_api/.env` 用 `UPDATE_REPO` 覆盖。要求 PHP 启用 zip 扩展且服务器可访问外网。
+
+**方式二：Docker**
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+**方式三：手动覆盖（虚拟主机）**
+
+下载新版 `release.zip`，解压覆盖站点目录下的程序文件，**保留 `content/` 目录**与 `pt_api/.env`、`pt_api/.installed` 即可。
+
+> 分离部署（PHP 在 web root 之外）的说明见 [docs/deploy-separate.md](docs/deploy-separate.md) —— 它是同一 release 的高级配置，不是独立版本。
+
+---
+
 ## 开发指南 (面向开发者)
 
-> 📁 **前端路径体系（theme / pattern / upload）请先阅读** [docs/path-architecture.md](docs/path-architecture.md)，了解前后端路径约定与开发代理原理。
+> 📁 **前端路径体系（content/ 用户内容目录）请先阅读** [docs/path-architecture.md](docs/path-architecture.md)，了解前后端路径约定与开发代理原理。
 
 本工程实现了极简的工作流，允许前端独立开发、一键热更新及一键自动化发布。
 
@@ -127,7 +171,7 @@ pnpm install # 在根目录安装工作区依赖
 pnpm dev
 ```
 前端开发服务器将运行在 `http://localhost:5173`。
-* **自动映射代理**：开发服务器会自动加载 `pt_frontend` 下的环境变量，并将本地接口、上传及主题请求通过反向代理映射至您的本地 PHP 路径下。
+* **自动映射代理**：开发服务器会自动加载 `pt_frontend` 下的环境变量，并将本地接口、`content/` 静态资源请求通过反向代理映射至您的本地 PHP 路径下。
 
 ### 3. 开发路径自定义 (.env.local)
 默认情况下，Vite 代理期望您的本地 PHP 服务运行在 `http://localhost/PeachtreesCMS/pt_api/` 下。

@@ -86,55 +86,65 @@ ini_set('mbstring.func_overload', '0');
 ini_set('output_handler', '');
 ini_set('zlib.output_compression', '0');
 
-// Upload directory configuration (read from .env, supports user customization)
-// Supports absolute or relative paths (relative to project root).
-$uploadDir = $_ENV['UPLOAD_DIR'] ?? '';
+// ---------------------------------------------------------------------------
+// Content directory configuration ("wp-content" model)
+//
+// All user-mutable content lives under ONE directory (default: content/ under
+// the project root):
+//   content/uploads/    attachments      (was upload/)
+//   content/themes/     theme packages   (was theme/)
+//   content/patterns/   page styles      (was pattern/)
+//
+// CONTENT_DIR overrides the whole content root (absolute path, or relative to
+// the project root). The legacy UPLOAD_DIR / THEME_DIR / STYLE_DIR overrides
+// still take precedence for their own subtree (separated deployments).
+// ---------------------------------------------------------------------------
 $projectRoot = realpath(__DIR__ . '/..') ?: (__DIR__ . '/..');
 
-if (!empty($uploadDir)) {
-    $uploadDir = rtrim($uploadDir, '/\\');
-    // Resolve relative path against project root
-    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $uploadDir)) {
-        $uploadDir = $projectRoot . '/' . $uploadDir;
+if (!function_exists('ptResolveContentDir')) {
+    /** Resolve a directory setting: absolute kept as-is, relative resolved against $projectRoot. */
+    function ptResolveContentDir(string $value, string $defaultAbs): string {
+        $value = rtrim($value, '/\\');
+        if ($value === '') {
+            return $defaultAbs;
+        }
+        if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $value)) {
+            global $projectRoot;
+            $value = $projectRoot . '/' . $value;
+        }
+        return rtrim($value, '/\\');
     }
-    $uploadDir .= '/';
-} else {
-    // Default path: use upload/ under project root
-    $uploadDir = $projectRoot . '/upload/';
 }
-define('UPLOAD_DIR', $uploadDir);
 
-// Theme directory configuration (read from .env, supports user customization)
-$themeDir = $_ENV['THEME_DIR'] ?? '';
-if (!empty($themeDir)) {
-    $themeDir = rtrim($themeDir, '/\\');
-    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $themeDir)) {
-        $themeDir = $projectRoot . '/' . $themeDir;
-    }
-} else {
-    $themeDir = $projectRoot . '/theme';
-}
+$contentRoot = ptResolveContentDir($_ENV['CONTENT_DIR'] ?? '', $projectRoot . '/content');
+define('CONTENT_DIR', $contentRoot);
+
+$uploadDir = ptResolveContentDir($_ENV['UPLOAD_DIR'] ?? '', CONTENT_DIR . '/uploads');
+define('UPLOAD_DIR', $uploadDir . '/');
+
+$themeDir = ptResolveContentDir($_ENV['THEME_DIR'] ?? '', CONTENT_DIR . '/themes');
 define('THEME_DIR', $themeDir);
 
-// Style/pattern directory configuration (read from .env, supports user customization)
-$styleDir = $_ENV['STYLE_DIR'] ?? '';
-if (!empty($styleDir)) {
-    $styleDir = rtrim($styleDir, '/\\');
-    if (!preg_match('/^(\/|[a-zA-Z]:[\/\\\\])/', $styleDir)) {
-        $styleDir = $projectRoot . '/' . $styleDir;
-    }
-} else {
-    $styleDir = $projectRoot . '/pattern';
-}
+$styleDir = ptResolveContentDir($_ENV['STYLE_DIR'] ?? '', CONTENT_DIR . '/patterns');
 define('STYLE_DIR', $styleDir);
+
+// Site-relative path prefixes returned by backend APIs — the single source of
+// truth for the path contract with the frontend (pt_frontend/src/utils/path.js).
+define('UPLOAD_REL_PREFIX', 'content/uploads');
+define('THEMES_REL_PREFIX', 'content/themes');
+define('PATTERNS_REL_PREFIX', 'content/patterns');
+
+// CMS version (shown in the admin panel; the updater compares it against the
+// latest GitHub release tag)
+define('PT_VERSION', '0.9.0');
 
 // Upload URL configuration
 // ⚠️ DEPRECATED (historical only): since the path convention update, backend APIs
-// return SITE-RELATIVE paths (e.g. upload/2026/04/x.jpg) and the frontend converts
-// them via pt_frontend/src/utils/path.js. Do NOT use UPLOAD_URL / UPLOAD_URL_BASE
-// to build absolute upload URLs anymore.
+// return SITE-RELATIVE paths (e.g. content/uploads/2026/04/x.jpg) and the frontend
+// converts them via pt_frontend/src/utils/path.js. Do NOT use UPLOAD_URL /
+// UPLOAD_URL_BASE to build absolute upload URLs anymore.
 // For shared hosting in subdirectory, set UPLOAD_URL_BASE environment variable
-// Example: /PeachtreesCMS/upload/
+// Example: /PeachtreesCMS/content/uploads/
 $uploadUrlBase = $_ENV['UPLOAD_URL_BASE'] ?? '';
 if (!empty($uploadUrlBase)) {
     // Use custom URL base from environment
@@ -146,9 +156,9 @@ if (!empty($uploadUrlBase)) {
     // Example: /PeachtreesCMS/pt_api/media => /PeachtreesCMS
     $baseDir = preg_replace('#/pt_api(/.*)?$#i', '', $scriptDir);
     if ($baseDir === '' || $baseDir === '/') {
-        define('UPLOAD_URL', '/upload/');
+        define('UPLOAD_URL', '/' . UPLOAD_REL_PREFIX . '/');
     } else {
-        define('UPLOAD_URL', rtrim($baseDir, '/') . '/upload/');
+        define('UPLOAD_URL', rtrim($baseDir, '/') . '/' . UPLOAD_REL_PREFIX . '/');
     }
 }
 

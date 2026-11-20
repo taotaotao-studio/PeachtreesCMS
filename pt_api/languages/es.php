@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'Extensión PDO MySQL',
     'install.req_fileinfo' => 'Extensión Fileinfo',
     'install.req_writable_api' => 'Directorio pt_api/ con permisos de escritura (para la configuración)',
-    'install.req_writable_upload' => 'Directorio upload/ con permisos de escritura (para cargas)',
-    'install.req_writable_theme' => 'Directorio theme/ con permisos de escritura (para la configuración del tema)',
-    'install.req_writable_pattern' => 'Directorio pattern/ con permisos de escritura (para los estilos de página)',
+    'install.req_writable_upload' => 'Directorio content/uploads/ con permisos de escritura (para cargas)',
+    'install.req_writable_theme' => 'Directorio content/themes/ con permisos de escritura (para la configuración del tema)',
+    'install.req_writable_pattern' => 'Directorio content/patterns/ con permisos de escritura (para los estilos de página)',
     'install.req_pass' => 'Se cumplen todos los requisitos',
     'install.req_fail' => 'Algunos requisitos no se cumplen. Resuelva el problema y actualice la página.',
     

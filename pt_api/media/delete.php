@@ -29,7 +29,10 @@ if (!is_string($path) || trim($path) === '') {
 }
 
 $path = ltrim(trim($path), '/');
-if (str_starts_with($path, 'upload/')) {
+if (str_starts_with($path, UPLOAD_REL_PREFIX . '/')) {
+    $path = substr($path, strlen(UPLOAD_REL_PREFIX) + 1);
+} elseif (str_starts_with($path, 'upload/')) {
+    // Legacy rows stored before the content/ layout
     $path = substr($path, 7);
 }
 
@@ -56,8 +59,8 @@ if (!@unlink($realPath)) {
 // 同步删除 pt_media 中的记录（文件已删，记录删除失败仅记日志，syncMediaLibrary 会清理孤儿）
 try {
     $pdo = getDB();
-    $del = $pdo->prepare("DELETE FROM pt_media WHERE path = ?");
-    $del->execute(['upload/' . str_replace('\\', '/', $path)]);
+    $del = $pdo->prepare("DELETE FROM pt_media WHERE path = ? OR path = ?");
+    $del->execute([UPLOAD_REL_PREFIX . '/' . str_replace('\\', '/', $path), 'upload/' . str_replace('\\', '/', $path)]);
 } catch (Throwable $e) {
     error_log('pt_media delete failed: ' . $e->getMessage());
 }
@@ -79,5 +82,5 @@ while ($mediaRoot !== '' && str_starts_with($currentDir, $mediaRoot . DIRECTORY_
 }
 
 success([
-    'path' => '/upload/' . str_replace('\\', '/', $path)
+    'path' => '/' . UPLOAD_REL_PREFIX . '/' . str_replace('\\', '/', $path)
 ], 'Deleted successfully');

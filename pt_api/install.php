@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/config.php';
 
 ini_set('display_errors', '0');
 
@@ -43,12 +44,8 @@ function makeEnv(array $config): string {
     $lines[] = 'DB_USER=' . $config['DB_USER'];
     $lines[] = 'DB_PASS=' . $config['DB_PASS'];
     $lines[] = '';
-    $lines[] = '# Upload directory (optional, leave empty for default; absolute path or relative to project root)';
-    $lines[] = 'UPLOAD_DIR=';
-    $lines[] = '';
-    $lines[] = '# Theme / pattern directories (optional, leave empty for default)';
-    $lines[] = 'THEME_DIR=';
-    $lines[] = 'STYLE_DIR=';
+    $lines[] = '# Content directory (optional, leave empty for default <project root>/content; absolute path or relative to project root)';
+    $lines[] = 'CONTENT_DIR=';
     return implode(PHP_EOL, $lines) . PHP_EOL;
 }
 
@@ -177,24 +174,28 @@ function checkRequirements(): array {
         'detail' => $apiDir
     ];
     
-    // upload/ writable
-    $uploadDir = dirname(__DIR__) . '/upload';
+    // content/ writable (uploads / themes / patterns are created on demand)
+    $contentRoot = dirname(__DIR__) . '/content';
+    $uploadDir = $contentRoot . '/uploads';
+    $themeDir = $contentRoot . '/themes';
+    $patternDir = $contentRoot . '/patterns';
+    foreach ([$uploadDir, $themeDir, $patternDir] as $contentDir) {
+        if (!is_dir($contentDir)) {
+            @mkdir($contentDir, 0755, true);
+        }
+    }
     $checks[] = [
         'key' => 'install.req_writable_upload',
         'pass' => is_writable($uploadDir),
         'detail' => $uploadDir
     ];
     
-    // theme/ writable
-    $themeDir = dirname(__DIR__) . '/theme';
     $checks[] = [
         'key' => 'install.req_writable_theme',
         'pass' => is_writable($themeDir),
         'detail' => $themeDir
     ];
     
-    // pattern/ writable
-    $patternDir = dirname(__DIR__) . '/pattern';
     $checks[] = [
         'key' => 'install.req_writable_pattern',
         'pass' => is_writable($patternDir),
@@ -275,6 +276,17 @@ if ($action === 'install' && empty($errors)) {
                     'DB_PASS' => $form['db_pass']
                 ]);
                 file_put_contents($envPath, $env);
+
+                // Record the installed CMS version (used by the admin updater)
+                try {
+                    $versionStmt = $pdo->prepare(
+                        "INSERT INTO pt_options (option_key, option_value) VALUES ('pt_version', ?) "
+                        . "ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)"
+                    );
+                    $versionStmt->execute([PT_VERSION]);
+                } catch (PDOException $versionErr) {
+                    error_log('pt_version option write failed: ' . $versionErr->getMessage());
+                }
 
                 // Create installation lock file
                 file_put_contents($installedFile, date('Y-m-d H:i:s'));

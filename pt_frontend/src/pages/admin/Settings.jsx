@@ -3,6 +3,7 @@ import { optionsAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import TiptapSimpleEditor from '../../components/TiptapSimpleEditor'
+import SystemUpdateCard from '../../components/SystemUpdateCard'
 import { toast } from '../../utils/toast'
 
 export default function Settings() {
@@ -178,6 +179,8 @@ export default function Settings() {
                     </form>
                 </div>
             </div>
+
+            <SystemUpdateCard />
         </div>
     )
 }

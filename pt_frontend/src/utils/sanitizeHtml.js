@@ -30,8 +30,9 @@ const ALLOWED_ATTRIBUTES = {
 }
 
 // 允许的 URL 协议/前缀（用于 href / src）
-// 站点相对路径前缀（upload/theme/pattern 为 CMS 内部资源目录）+ 常见协议/锚点
-const SAFE_URL_PREFIXES = ['http://', 'https://', '//', '/', './', '../', '#', 'mailto:', 'upload/', 'theme/', 'pattern/']
+// 站点相对路径前缀（content/ 为 CMS 用户内容目录；upload/theme/pattern 为
+// 1.0 前旧目录名，仅为存量数据渲染兼容而保留）+ 常见协议/锚点
+const SAFE_URL_PREFIXES = ['http://', 'https://', '//', '/', './', '../', '#', 'mailto:', 'content/', 'upload/', 'theme/', 'pattern/']
 
 function isSafeUrl(value) {
   if (typeof value !== 'string') return false

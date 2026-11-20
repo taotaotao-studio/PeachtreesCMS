@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'PDO MySQL Extension',
     'install.req_fileinfo' => 'Fileinfo Extension',
     'install.req_writable_api' => 'pt_api/ directory writable (to generate config)',
-    'install.req_writable_upload' => 'upload/ directory writable (for uploads)',
-    'install.req_writable_theme' => 'theme/ directory writable (for theme config)',
-    'install.req_writable_pattern' => 'pattern/ directory writable (for page styles)',
+    'install.req_writable_upload' => 'content/uploads/ directory writable (for uploads)',
+    'install.req_writable_theme' => 'content/themes/ directory writable (for theme config)',
+    'install.req_writable_pattern' => 'content/patterns/ directory writable (for page styles)',
     'install.req_pass' => 'All requirements met',
     'install.req_fail' => 'Some requirements not met. Please resolve and refresh',
     

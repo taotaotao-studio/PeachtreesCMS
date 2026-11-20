@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'PDO MySQL 拡張機能',
     'install.req_fileinfo' => 'Fileinfo 拡張機能',
     'install.req_writable_api' => 'pt_api/ ディレクトリの書き込み権限 (設定ファイル生成用)',
-    'install.req_writable_upload' => 'upload/ ディレクトリの書き込み権限 (添付ファイルアップロード用)',
-    'install.req_writable_theme' => 'theme/ ディレクトリの書き込み権限 (テーマ設定変更用)',
-    'install.req_writable_pattern' => 'pattern/ ディレクトリの書き込み権限 (ページスタイル選択用)',
+    'install.req_writable_upload' => 'content/uploads/ ディレクトリの書き込み権限 (添付ファイルアップロード用)',
+    'install.req_writable_theme' => 'content/themes/ ディレクトリの書き込み権限 (テーマ設定変更用)',
+    'install.req_writable_pattern' => 'content/patterns/ ディレクトリの書き込み権限 (ページスタイル選択用)',
     'install.req_pass' => '環境要件を満たしています',
     'install.req_fail' => '一部の環境要件が満たされていません。修正した後にリロードして再試行してください。',
     

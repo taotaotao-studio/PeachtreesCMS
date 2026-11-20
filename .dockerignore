@@ -1,0 +1,27 @@
+# Never bake local state, build artifacts or VCS metadata into the image.
+.git
+.github
+.gitignore
+.gitattributes
+
+# Dependencies & build outputs (the Dockerfile builds the frontend itself)
+node_modules
+pt_frontend/node_modules
+pt_frontend/dist
+
+# Release artifacts
+release.zip
+release-temp
+
+# Local secrets & runtime state — must NEVER enter an image
+pt_api/.env
+pt_api/.env.local
+pt_api/.installed
+pt_api/sessions
+
+# Local dev attachments
+pt_frontend/public/content/uploads/**
+
+# Docs & analysis notes (not needed inside the image)
+docs
+*.md

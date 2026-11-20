@@ -1,0 +1,45 @@
+# PeachtreesCMS — GitHub Release
+#
+# On every v* tag: build the release.zip (with the packaging self-check) and
+# attach it to a GitHub Release together with its SHA-256 checksum.
+# This artifact IS the update source consumed by the in-app updater
+# (pt_api/update/check.php → apply.php).
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Build release package (includes self-check)
+        run: node scripts/package.js
+
+      - name: Generate checksum
+        run: sha256sum release.zip > release.zip.sha256
+
+      - name: Create GitHub Release and upload artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release.zip
+            release.zip.sha256
+          generate_release_notes: true

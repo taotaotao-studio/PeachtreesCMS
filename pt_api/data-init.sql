@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS `pt_patterns` (
 ) ENGINE=InnoDB AUTO_INCREMENT=95 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 INSERT INTO `pt_patterns` (`id`, `name`, `description`, `version`, `author`, `entry_css`, `thumbnail`) VALUES
-	(1, '01', '经典蓝色背景，适合商务和正式场合', '1.0', 'PeachtreesCMS', 'style.css', '/pattern/01/bg.svg'),
+	(1, '01', '经典蓝色背景，适合商务和正式场合', '1.0', 'PeachtreesCMS', 'style.css', 'content/patterns/01/bg.svg'),
 	(2, '02', '温暖的橙色渐变背景，适合生活和旅行类文章', '1.0', 'PeachtreesCMS', 'style.css', NULL);
 
 -- Table: pt_themes

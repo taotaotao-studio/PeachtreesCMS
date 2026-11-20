@@ -268,7 +268,7 @@ function validateUploadFiles(array $files, array $whitelist): array
  * 建目录、落盘、写 pt_media。
  *
  * 目录结构沿用历史约定：UPLOAD_DIR/<Y>/<m>/<d>-<16位随机>.<ext>，
- * 对外路径固定为站点相对形式 upload/<Y>/<m>/<file>。
+ * 对外路径固定为站点相对形式 content/uploads/<Y>/<m>/<file>。
  *
  * @param array $validated validateUploadFiles() 的结果
  * @param int|null $userId 上传者 id（邮件发布等匿名场景为 null）
@@ -296,7 +296,7 @@ function storeUploadedFiles(array $validated, ?int $userId): array
     foreach ($validated as $item) {
         $filename = date('d') . '-' . bin2hex(random_bytes(8)) . '.' . $item['ext'];
         $absolutePath = $absoluteDir . '/' . $filename;
-        $relativePath = 'upload/' . $relativeDir . '/' . $filename;
+        $relativePath = UPLOAD_REL_PREFIX . '/' . $relativeDir . '/' . $filename;
 
         if (!move_uploaded_file($item['tmp_name'], $absolutePath)) {
             error_log('[peachtrees] Failed to move uploaded file to ' . $absolutePath);

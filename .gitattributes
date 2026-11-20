@@ -1,0 +1,3 @@
+# Line-ending discipline for files where CRLF breaks execution
+docker/entrypoint.sh text eol=lf
+*.sh text eol=lf

@@ -169,4 +169,12 @@ export const mediaAPI = {
     api.delete('/media/delete.php', { data: { path } })
 }
 
+// System update API (admin only; the backend re-resolves the update source itself)
+export const updateAPI = {
+  check: () =>
+    api.get('/update/check.php'),
+  apply: () =>
+    api.post('/update/apply.php')
+}
+
 export default api

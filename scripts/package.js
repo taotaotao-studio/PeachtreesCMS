@@ -46,7 +46,9 @@ function shouldSkipApiEntry(relative) {
 const REQUIRED_ENTRIES = [
   '.htaccess',
   'index.html',
-  'upload/.gitkeep',
+  'content/uploads/.gitkeep',
+  'content/themes/default/style.css',
+  'content/patterns/01/style.css',
   'pt_api/install.php',
   'pt_api/config.php',
   'pt_api/.env.example',
@@ -185,11 +187,12 @@ function main() {
     fs.cpSync(distDir, TEMP_RELEASE_DIR, { recursive: true });
 
     // The build output mirrors pt_frontend/public/, which may carry local
-    // attachments. Ship an EMPTY upload directory instead (only .gitkeep, so
-    // the directory survives archiving).
-    const tempUploadDir = path.join(TEMP_RELEASE_DIR, 'upload');
+    // attachments. Ship an EMPTY content/uploads directory instead (only
+    // .gitkeep, so the directory survives archiving). content/themes and
+    // content/patterns ship as-is — they are release artifacts.
+    const tempUploadDir = path.join(TEMP_RELEASE_DIR, 'content', 'uploads');
     // Same reasoning as step 2: if this fails, local attachments from
-    // pt_frontend/public/upload would ride along into the release.
+    // pt_frontend/public/content/uploads would ride along into the release.
     if (fs.existsSync(tempUploadDir) && !safeRemoveDir(tempUploadDir)) {
       throw new Error(`Could not clear ${tempUploadDir} — it may still hold local attachments.`);
     }

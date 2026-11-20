@@ -1,26 +1,29 @@
-# PeachtreesCMS Nginx 配置示例 — 后端分离部署
+# PeachtreesCMS Nginx 配置示例 — 后端分离部署（高级配置）
+#
+# 这是【同一个产品】的一种高级部署拓扑，不是独立版本：代码与 release.zip
+# 与合体部署完全一致，差别只在 PHP 放到 web root 之外、由 .env 指回前端目录。
 #
 # 部署结构：
-#   /var/www/html/blog/            ← 前端 + 静态资源（nginx root 下）
+#   /var/www/html/blog/            ← 前端 + content/ 用户内容目录（nginx root 下）
 #     ├── index.html
 #     ├── admin.html
 #     ├── assets/
-#     ├── upload/                  ← PHP 需要跨目录写入上传目录
-#     ├── theme/                   ← PHP 需要跨目录扫描主题目录
-#     ├── pattern/                 ← PHP 需要跨目录扫描风格目录
-#     ├── languages/
-#     └── imgs/
+#     ├── content/
+#     │   ├── uploads/             ← PHP 需要跨目录写入上传目录
+#     │   ├── themes/              ← PHP 需要跨目录扫描主题目录
+#     │   └── patterns/            ← PHP 需要跨目录扫描风格目录
+#     └── languages/
 #
 #   /var/www/php/pt_api/           ← PHP 后端（在 web root 之外）
 #
-# ⚠️ 此方案需在 pt_api/.env 中手动配置路径（PHP 代码无法自动探测前端目录）：
+# ⚠️ 此方案需在 pt_api/.env 中配置一个 CONTENT_DIR（PHP 代码即可全部归位）：
 #
-#   UPLOAD_DIR=/var/www/html/blog/upload
-#   THEME_DIR=/var/www/html/blog/theme
-#   STYLE_DIR=/var/www/html/blog/pattern
-#   UPLOAD_URL_BASE=/blog/upload
+#   CONTENT_DIR=/var/www/html/blog/content
 #
-# 并确保 php-fpm 的 open_basedir 允许 PHP 写入 /var/www/html/blog/upload/。
+# （也可以按子目录单独覆盖：UPLOAD_DIR / THEME_DIR / STYLE_DIR，见
+#   pt_api/.env.example。）
+#
+# 并确保 php-fpm 的 open_basedir 允许 PHP 读写 /var/www/html/blog/content/。
 #
 # 前端构建配置（与同目录方案一致）：
 #   vite.config.js → base: '/blog/'
@@ -34,8 +37,8 @@ server {
     index index.html;
     server_name your-domain.com;
 
-    # 拒绝访问所有以点 (.) 开头的隐藏敏感文件或目录（如 .env, .installed, .git, .htaccess）
-    location ~ /\. {
+    # 拒绝访问所有以点 (.) 开头的隐藏敏感文件或目录（如 .env, .installed, .git）
+    location ~ /\\. {
         deny all;
         return 404;
         log_not_found off;
@@ -47,6 +50,7 @@ server {
     # 且不以 .php 结尾（因此也不会命中下面的 PHP location），最终会落到静态
     # 文件分支被原样吐出。会话文件里存着【明文验证码答案】，文件名就是 session id，
     # 一旦可读则验证码形同虚设。必须显式拒绝（.htaccess 与 nginx 都要有）。
+    # （容器部署时 SESSION_DIR 已移出 web root，无此风险。）
     location ~ ^/blog/pt_api/(sessions|rate_limits)(/|$) {
         deny all;
         return 404;
@@ -64,7 +68,7 @@ server {
         include fastcgi_params;
     }
 
-    # 前端静态资源 + upload/theme/pattern/languages/imgs
+    # 前端静态资源 + content/ 用户内容目录
     location /blog/ {
         try_files $uri $uri/ =404;
 

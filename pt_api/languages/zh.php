@@ -30,9 +30,9 @@ return [
     'install.req_pdo_mysql' => 'PDO MySQL 扩展',
     'install.req_fileinfo' => 'Fileinfo 扩展',
     'install.req_writable_api' => 'pt_api/ 目录可写（用于生成配置文件）',
-    'install.req_writable_upload' => 'upload/ 目录可写（用于附件上传）',
-    'install.req_writable_theme' => 'theme/ 目录可写（用于修改主题配置）',
-    'install.req_writable_pattern' => 'pattern/ 目录可写（用于页面风格选择）',
+    'install.req_writable_upload' => 'content/uploads/ 目录可写（用于附件上传）',
+    'install.req_writable_theme' => 'content/themes/ 目录可写（用于修改主题配置）',
+    'install.req_writable_pattern' => 'content/patterns/ 目录可写（用于页面风格选择）',
     'install.req_pass' => '环境要求已满足',
     'install.req_fail' => '某些环境要求未满足，请修复后刷新重试',
     

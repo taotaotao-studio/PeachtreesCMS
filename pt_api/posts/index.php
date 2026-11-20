@@ -73,8 +73,12 @@ try {
         $coverMedia = json_decode($post['cover_media'] ?? '[]', true);
         $coverMedia = is_array($coverMedia) ? $coverMedia : [];
         $post['cover_media'] = array_map(function ($path) {
+            if (is_string($path) && str_starts_with($path, UPLOAD_REL_PREFIX . '/bigpicture/')) {
+                return UPLOAD_REL_PREFIX . '/' . substr($path, strlen(UPLOAD_REL_PREFIX . '/bigpicture/'));
+            }
+            // Legacy rows stored before the content/ layout
             if (is_string($path) && str_starts_with($path, 'upload/bigpicture/')) {
-                return 'upload/' . substr($path, strlen('upload/bigpicture/'));
+                return UPLOAD_REL_PREFIX . '/' . substr($path, strlen('upload/bigpicture/'));
             }
             return $path;
         }, $coverMedia);
