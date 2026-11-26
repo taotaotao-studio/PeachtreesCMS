@@ -85,9 +85,17 @@ function splitSql(string $sql): array {
                 continue;
             }
             if ($char === '/' && $next === '*') {
-                $inBlockComment = true;
-                $i++;
-                continue;
+                // Versioned comments such as /*!40101 SET ... */ are executable
+                // statements: mysqldump wraps FOREIGN_KEY_CHECKS / SQL_MODE in
+                // them, so they must reach the server. Only plain comments get
+                // stripped here.
+                if (($i + 2 < $length ? $sql[$i + 2] : '') === '!') {
+                    // keep the conditional comment in the buffer (executable)
+                } else {
+                    $inBlockComment = true;
+                    $i++;
+                    continue;
+                }
             }
         }
 
@@ -299,10 +307,52 @@ if ($action === 'install' && empty($errors)) {
             $sql = replacePrefix($sql, $form['db_prefix']);
             $statements = splitSql($sql);
 
+            $inTx = false;
             try {
-                foreach ($statements as $statement) {
-                    $pdo->exec($statement);
+                // Session-scoped guard rails (mysqldump convention): only this
+                // connection is relaxed; nothing changes on the server side.
+                $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+                $pdo->exec('SET UNIQUE_CHECKS=0');
+
+                // Idempotent retries: drop leftover tables from a previous
+                // failed attempt (only tables carrying this install's prefix),
+                // so starting an install always begins from a clean slate.
+                $tblStmt = $pdo->prepare(
+                    "SELECT table_name FROM information_schema.tables "
+                    . "WHERE table_schema = DATABASE() AND table_name LIKE ?"
+                );
+                $tblStmt->execute([str_replace('_', '\\_', $form['db_prefix']) . '%']);
+                foreach ($tblStmt->fetchAll(PDO::FETCH_COLUMN) as $existingTable) {
+                    if (preg_match('/^[a-zA-Z0-9_]+$/', $existingTable) === 1) {
+                        $pdo->exec('DROP TABLE IF EXISTS `' . $existingTable . '`');
+                    }
                 }
+
+                // DDL implicitly commits in MySQL/MariaDB, so DDL runs outside
+                // the transaction while seed INSERTs run inside one transaction
+                // — a mid-way failure rolls back instead of leaving half data.
+                $ddlPattern = '/^\s*(CREATE|DROP|ALTER|TRUNCATE|RENAME|USE|SET)\b/i';
+                foreach ($statements as $statement) {
+                    if (preg_match($ddlPattern, $statement)) {
+                        if ($inTx) {
+                            $pdo->commit();
+                            $inTx = false;
+                        }
+                        $pdo->exec($statement);
+                    } else {
+                        if (!$inTx) {
+                            $pdo->beginTransaction();
+                            $inTx = true;
+                        }
+                        $pdo->exec($statement);
+                    }
+                }
+                if ($inTx) {
+                    $pdo->commit();
+                    $inTx = false;
+                }
+                $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+                $pdo->exec('SET UNIQUE_CHECKS=1');
 
                 $envPath = __DIR__ . '/.env';
                 $env = makeEnv([
@@ -326,6 +376,7 @@ if ($action === 'install' && empty($errors)) {
                 }
 
                 // Create the administrator account (credentials chosen in the wizard)
+                $adminOk = false;
                 try {
                     $adminStmt = $pdo->prepare(
                         "INSERT INTO {$form['db_prefix']}users (username, nickname, email, password_hash, role, created_at, last_login_at) "
@@ -337,18 +388,44 @@ if ($action === 'install' && empty($errors)) {
                         $form['admin_email'],
                         password_hash($form['admin_password'], PASSWORD_BCRYPT, ['cost' => 12])
                     ]);
+                    $adminOk = true;
+                    $adminId = (int)$pdo->lastInsertId();
                 } catch (PDOException $adminErr) {
                     error_log('admin user insert failed: ' . $adminErr->getMessage());
                     $errors[] = __('install.admin_insert_failed');
                     $step = 2;
                 }
 
-                // Create installation lock file
-                file_put_contents($installedFile, date('Y-m-d H:i:s'));
+                // Seed demo posts reference user id 1 (the first account). If
+                // this install's admin received a different id, re-point the
+                // seeded posts so foreign keys stay consistent.
+                if ($adminOk && isset($adminId) && $adminId !== 1) {
+                    try {
+                        $attrStmt = $pdo->prepare(
+                            "UPDATE {$form['db_prefix']}posts SET user_id = ? WHERE user_id = 1"
+                        );
+                        $attrStmt->execute([$adminId]);
+                    } catch (PDOException $attrErr) {
+                        error_log('seed post attribution failed: ' . $attrErr->getMessage());
+                    }
+                }
 
-                $success = __('install.complete');
-                $step = 4;
+                if ($adminOk) {
+                    // Create installation lock file — only after every step
+                    // succeeded, so a failure keeps the wizard re-runnable.
+                    file_put_contents($installedFile, date('Y-m-d H:i:s'));
+                    $success = __('install.complete');
+                    $step = 4;
+                }
             } catch (PDOException $e) {
+                if ($inTx) {
+                    try { $pdo->rollBack(); } catch (PDOException $rollBackErr) {}
+                    $inTx = false;
+                }
+                try {
+                    $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+                    $pdo->exec('SET UNIQUE_CHECKS=1');
+                } catch (PDOException $restoreErr) {}
                 $errors[] = __('install.import_failed') . $e->getMessage();
                 $step = 2;
             }
