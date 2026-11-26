@@ -44,8 +44,8 @@ if (empty($password)) {
     error('Password cannot be empty');
 }
 
-if (strlen($password) < 6) {
-    error('Password must be at least 6 characters');
+if (strlen($password) < 8) {
+    error('Password must be at least 8 characters');
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

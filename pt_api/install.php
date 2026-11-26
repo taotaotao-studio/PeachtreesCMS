@@ -199,9 +199,29 @@ function checkRequirements(): array {
     $checks[] = [
         'key' => 'install.req_writable_pattern',
         'pass' => is_writable($patternDir),
-        'detail' => $patternDir
+        'detail' => $patternDir,
+        'required' => true
     ];
-    
+
+    // GD extension — required: the comment captcha is rendered with GD
+    $checks[] = [
+        'key' => 'install.req_gd',
+        'pass' => extension_loaded('gd'),
+        'detail' => extension_loaded('gd') ? 'enabled' : 'missing',
+        'required' => true
+    ];
+
+    // Online updater support — RECOMMENDED, not blocking: zip (ZipArchive) to
+    // unpack release.zip and curl for outbound downloads
+    $updaterZip = class_exists('ZipArchive');
+    $updaterCurl = extension_loaded('curl');
+    $checks[] = [
+        'key' => 'install.req_updater',
+        'pass' => $updaterZip && $updaterCurl,
+        'detail' => ($updaterZip ? 'zip' : 'zip missing') . ' / ' . ($updaterCurl ? 'curl' : 'curl missing'),
+        'required' => false
+    ];
+
     return $checks;
 }
 
@@ -218,7 +238,10 @@ $form = [
     'db_name' => $_POST['db_name'] ?? 'peachtrees',
     'db_user' => $_POST['db_user'] ?? 'root',
     'db_pass' => $_POST['db_pass'] ?? '',
-    'db_prefix' => $_POST['db_prefix'] ?? 'pt_'
+    'db_prefix' => $_POST['db_prefix'] ?? 'pt_',
+    'admin_username' => trim($_POST['admin_username'] ?? 'admin'),
+    'admin_email' => trim($_POST['admin_email'] ?? ''),
+    'admin_password' => $_POST['admin_password'] ?? ''
 ];
 
 if ($action === 'check' || $action === 'install') {
@@ -226,6 +249,19 @@ if ($action === 'check' || $action === 'install') {
         $form['db_prefix'] = normalizePrefix($form['db_prefix']);
     } catch (RuntimeException $e) {
         $errors[] = $e->getMessage();
+    }
+
+    // Administrator account created by the installer — no known default
+    // credentials are shipped anymore (the old preset hash was removed from
+    // data-init.sql)
+    if (!preg_match('/^[a-zA-Z0-9_-]{3,50}$/', $form['admin_username'])) {
+        $errors[] = __('install.admin_username_invalid');
+    }
+    if (!filter_var($form['admin_email'], FILTER_VALIDATE_EMAIL)) {
+        $errors[] = __('install.admin_email_invalid');
+    }
+    if (strlen($form['admin_password']) < 8) {
+        $errors[] = __('install.admin_password_short');
     }
 }
 
@@ -277,15 +313,34 @@ if ($action === 'install' && empty($errors)) {
                 ]);
                 file_put_contents($envPath, $env);
 
-                // Record the installed CMS version (used by the admin updater)
+                // Record the installed CMS version (used by the admin updater).
+                // The options table name honours the custom table prefix.
                 try {
                     $versionStmt = $pdo->prepare(
-                        "INSERT INTO pt_options (option_key, option_value) VALUES ('pt_version', ?) "
+                        "INSERT INTO {$form['db_prefix']}options (option_key, option_value) VALUES ('pt_version', ?) "
                         . "ON DUPLICATE KEY UPDATE option_value = VALUES(option_value)"
                     );
                     $versionStmt->execute([PT_VERSION]);
                 } catch (PDOException $versionErr) {
                     error_log('pt_version option write failed: ' . $versionErr->getMessage());
+                }
+
+                // Create the administrator account (credentials chosen in the wizard)
+                try {
+                    $adminStmt = $pdo->prepare(
+                        "INSERT INTO {$form['db_prefix']}users (username, nickname, email, password_hash, role, created_at, last_login_at) "
+                        . "VALUES (?, ?, ?, ?, 1, NOW(), NOW())"
+                    );
+                    $adminStmt->execute([
+                        $form['admin_username'],
+                        $form['admin_username'],
+                        $form['admin_email'],
+                        password_hash($form['admin_password'], PASSWORD_BCRYPT, ['cost' => 12])
+                    ]);
+                } catch (PDOException $adminErr) {
+                    error_log('admin user insert failed: ' . $adminErr->getMessage());
+                    $errors[] = __('install.admin_insert_failed');
+                    $step = 2;
                 }
 
                 // Create installation lock file
@@ -377,7 +432,7 @@ $availableLanguages = getAvailableLanguages();
       $reqChecks = checkRequirements();
       $allPassed = true;
       foreach ($reqChecks as $check) {
-          if (!$check['pass']) {
+          if (!$check['pass'] && ($check['required'] ?? true)) {
               $allPassed = false;
           }
       }
@@ -430,6 +485,19 @@ $availableLanguages = getAvailableLanguages();
           <label><?php echo __('install.db_prefix'); ?></label>
           <input name="db_prefix" value="<?php echo h($form['db_prefix']); ?>" />
         </div>
+        <div class="field">
+          <label><?php echo __('install.admin_username'); ?></label>
+          <input name="admin_username" value="<?php echo h($form['admin_username']); ?>" />
+        </div>
+        <div class="field">
+          <label><?php echo __('install.admin_email'); ?></label>
+          <input name="admin_email" value="<?php echo h($form['admin_email']); ?>" />
+        </div>
+        <div class="field">
+          <label><?php echo __('install.admin_password'); ?></label>
+          <input type="password" name="admin_password" value="<?php echo h($form['admin_password']); ?>" />
+          <div style="color:#666;font-size:12px;margin-top:4px;"><?php echo __('install.admin_password_hint'); ?></div>
+        </div>
         <div class="actions">
           <button class="btn btn-primary" type="submit" <?php echo !$allPassed ? 'disabled style="background: #ccc; cursor: not-allowed;"' : ''; ?>><?php echo __('install.next'); ?></button>
           <?php if (!$allPassed): ?>
@@ -446,6 +514,9 @@ $availableLanguages = getAvailableLanguages();
         <input type="hidden" name="db_user" value="<?php echo h($form['db_user']); ?>" />
         <input type="hidden" name="db_pass" value="<?php echo h($form['db_pass']); ?>" />
         <input type="hidden" name="db_prefix" value="<?php echo h($form['db_prefix']); ?>" />
+        <input type="hidden" name="admin_username" value="<?php echo h($form['admin_username']); ?>" />
+        <input type="hidden" name="admin_email" value="<?php echo h($form['admin_email']); ?>" />
+        <input type="hidden" name="admin_password" value="<?php echo h($form['admin_password']); ?>" />
         <div class="alert alert-success"><?php echo __('install.conn_success'); ?></div>
         <div class="actions">
           <button class="btn btn-primary" type="submit"><?php echo __('install.start'); ?></button>

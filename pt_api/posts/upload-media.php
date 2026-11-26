@@ -22,16 +22,24 @@ $user = getCurrentUser();
 if ($user) {
     $authenticated = true;
 } else {
-    // Fallback: token-based auth for mail handler
+    // Fallback: token-based auth for mail handler (only when plugin is enabled)
     $token = $_POST['token'] ?? ($_SERVER['HTTP_X_MAIL_TOKEN'] ?? '');
     if ($token !== '') {
         $pdo = getDB();
-        $stmt = $pdo->prepare('SELECT option_value FROM pt_options WHERE option_key = ? LIMIT 1');
-        $stmt->execute(['mail_publish_secret']);
-        $row = $stmt->fetch();
-        $secret = $row ? (string)$row['option_value'] : '';
-        if ($secret !== '' && hash_equals($secret, $token)) {
-            $authenticated = true;
+        // Check that the mail-publish plugin is actually enabled
+        $pluginStmt = $pdo->prepare('SELECT option_value FROM pt_options WHERE option_key = ? LIMIT 1');
+        $pluginStmt->execute(['plugin_enabled_mail-publish']);
+        $pluginRow = $pluginStmt->fetch();
+        $pluginEnabled = $pluginRow && $pluginRow['option_value'] !== '0';
+
+        if ($pluginEnabled) {
+            $stmt = $pdo->prepare('SELECT option_value FROM pt_options WHERE option_key = ? LIMIT 1');
+            $stmt->execute(['mail_publish_secret']);
+            $row = $stmt->fetch();
+            $secret = $row ? (string)$row['option_value'] : '';
+            if ($secret !== '' && hash_equals($secret, $token)) {
+                $authenticated = true;
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { commentsAPI, postsAPI } from '../../services/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { publicUrl } from '../../utils/path'
 import Pager from '../../components/Pager'
 import { toast } from '../../utils/toast'
 
@@ -259,13 +259,14 @@ export default function Comments() {
                       <td className="align-middle">
                         {post ? (
                           <span className="d-flex align-items-center gap-1">
-                            <Link
-                              to={`/post/${comment.post_id}`}
+                            <a
+                              href={publicUrl(`/#/post/${post.slug || comment.post_id}`)}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="text-decoration-none"
                             >
                               {post.title}
-                            </Link>
+                            </a>
                             {post.active != 1 && (
                               <span className="badge bg-secondary">{lang('unpublish')}</span>
                             )}
@@ -286,23 +287,34 @@ export default function Comments() {
                       </td>
                       <td className="align-middle text-center">
                         <div className="btn-group btn-group-sm">
-                          {comment.status === 0 && (
-                            <>
-                              <button
-                                className="btn btn-outline-success"
-                                onClick={() => handleApprove(comment.id, 1)}
-                                title={lang('approveComment')}
-                              >
-                                <i className="bi bi-check-lg"></i>
-                              </button>
-                              <button
-                                className="btn btn-outline-danger"
-                                onClick={() => handleApprove(comment.id, 2)}
-                                title={lang('rejectComment')}
-                              >
-                                <i className="bi bi-x-lg"></i>
-                              </button>
-                            </>
+                          {/* Quick status switching for EVERY status (previously
+                              only pending comments could be acted on) */}
+                          {comment.status !== 1 && (
+                            <button
+                              className="btn btn-outline-success"
+                              onClick={() => handleApprove(comment.id, 1)}
+                              title={lang('approveComment')}
+                            >
+                              <i className="bi bi-check-lg"></i>
+                            </button>
+                          )}
+                          {comment.status !== 0 && (
+                            <button
+                              className="btn btn-outline-warning"
+                              onClick={() => handleApprove(comment.id, 0)}
+                              title={lang('setPending')}
+                            >
+                              <i className="bi bi-clock"></i>
+                            </button>
+                          )}
+                          {comment.status !== 2 && (
+                            <button
+                              className="btn btn-outline-danger"
+                              onClick={() => handleApprove(comment.id, 2)}
+                              title={lang('rejectComment')}
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </button>
                           )}
                           <button
                             className="btn btn-outline-danger"

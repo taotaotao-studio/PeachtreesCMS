@@ -16,6 +16,9 @@ export default function PostEdit({ forcedPostType = null }) {
   const { id } = useParams()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(null)
+  const [dirty, setDirty] = useState(false)
+  const baselineRef = useRef(null)
   const [showMediaModal, setShowMediaModal] = useState(false)
   const [uploadingCover, setUploadingCover] = useState(false)
   const coverFileInputRef = useRef(null)
@@ -36,6 +39,30 @@ export default function PostEdit({ forcedPostType = null }) {
   const { lang } = useLanguage()
 
   const isEdit = !!id
+
+  // Dirty tracking: compare the current form against the loaded baseline so we
+  // can warn before losing unsaved changes (and enable "save and keep editing")
+  useEffect(() => {
+    if (!isEdit && baselineRef.current === null) {
+      baselineRef.current = JSON.stringify(form)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (baselineRef.current !== null) {
+      setDirty(JSON.stringify(form) !== baselineRef.current)
+    }
+  }, [form])
+
+  useEffect(() => {
+    if (!dirty) return
+    const handler = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
 
   useEffect(() => {
     loadTags()
@@ -72,6 +99,7 @@ export default function PostEdit({ forcedPostType = null }) {
 
   const loadPost = async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const res = await postsAPI.getOne(id)
       if (res.success) {
@@ -80,7 +108,7 @@ export default function PostEdit({ forcedPostType = null }) {
           ? data.cover_media.map(item => typeof item === 'string' ? { path: item, caption: '' } : item)
           : []
           
-        setForm({
+        const loadedForm = {
           post_type: data.post_type || 'normal',
           title: data.title,
           slug: data.slug || '',
@@ -91,10 +119,14 @@ export default function PostEdit({ forcedPostType = null }) {
           content: data.content,
           allow_comments: data.allow_comments === 1,
           created_at: data.created_at || ''
-        })
+        }
+        setForm(loadedForm)
+        baselineRef.current = JSON.stringify(loadedForm)
+        setDirty(false)
       }
     } catch (err) {
       console.error('Failed to load post:', err)
+      setLoadError((lang('loadPostFailed') || 'Failed to load post') + ': ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -104,9 +136,7 @@ export default function PostEdit({ forcedPostType = null }) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
+  const save = async (stay = false) => {
     if (!form.title.trim()) {
       toast(lang('required'), 'error')
       return
@@ -119,18 +149,37 @@ export default function PostEdit({ forcedPostType = null }) {
 
     setLoading(true)
     try {
+      let res
       if (isEdit) {
-        await postsAPI.update({ id, ...form })
+        res = await postsAPI.update({ id, ...form })
       } else {
-        await postsAPI.create(form)
+        res = await postsAPI.create(form)
       }
-      navigate('/admin/posts')
+      baselineRef.current = JSON.stringify(form)
+      setDirty(false)
+      if (stay) {
+        // 新建后留在编辑页继续修改；编辑则原地提示成功
+        if (!isEdit && res?.data?.id) {
+          navigate(`/admin/posts/edit/${res.data.id}`, { replace: true })
+        } else {
+          toast(lang('saveSuccess'), 'success')
+        }
+      } else {
+        navigate('/admin/posts')
+      }
     } catch (err) {
       toast(err.message, 'error')
     } finally {
       setLoading(false)
     }
   }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    save(false)
+  }
+
+  const handleSaveStay = () => save(true)
 
   const handleMediaSelect = (paths) => {
     const newItems = paths.map(path => ({ path, caption: '' }))
@@ -236,6 +285,12 @@ export default function PostEdit({ forcedPostType = null }) {
       </nav>
 
       <form onSubmit={handleSubmit}>
+        {loadError && (
+          <div className="alert alert-danger">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            {loadError}
+          </div>
+        )}
         <div className="row g-4">
           <div className="col-md-9">
             <div className="card shadow-sm mb-4">
@@ -374,7 +429,7 @@ export default function PostEdit({ forcedPostType = null }) {
                               <label className="form-label small mb-1">{lang('captionLabel')}</label>
                               <input
                                 className="form-control form-control-sm mb-2"
-                                placeholder="{lang('captionPlaceholder')}"
+                                placeholder={lang('captionPlaceholder')}
                                 value={item.caption}
                                 onChange={(e) => updateCaption(index, e.target.value)}
                               />
@@ -449,7 +504,7 @@ export default function PostEdit({ forcedPostType = null }) {
 
               <div className="mb-3">
                 <label className="form-label">{lang('publishTime')}</label>
-                <input type="datetime-local" className="form-control" value={form.created_at ? form.created_at.replace(' ', 'T').slice(0, 16) : ''} onChange={(e) => setForm({...form, created_at: e.target.value.replace('T', ' ') + ':00'})} />
+                <input type="datetime-local" className="form-control" value={form.created_at ? form.created_at.replace(' ', 'T').slice(0, 16) : ''} onChange={(e) => setForm({ ...form, created_at: e.target.value === '' ? '' : e.target.value.replace('T', ' ') + ':00' })} />
               </div>
 
               <div className="mb-3">
@@ -475,6 +530,15 @@ export default function PostEdit({ forcedPostType = null }) {
               <button type="submit" className="btn btn-primary w-100" disabled={loading}>
                 <i className="bi bi-save me-1"></i>
                 {lang('save')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-primary w-100 mt-2"
+                onClick={handleSaveStay}
+                disabled={loading}
+              >
+                <i className="bi bi-arrow-repeat me-1"></i>
+                {lang('saveStay')}
               </button>
             </div>
           </div>

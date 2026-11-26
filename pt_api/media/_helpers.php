@@ -63,6 +63,32 @@ function addMediaRecord(PDO $pdo, ?int $userId, string $relativePath, string $or
     $stmt->execute([$userId, $filename, $originalName, $relativePath, $mime, $size]);
 }
 
+/** Cache-file path (per-installation hash) for the media library scan TTL. */
+function mediaScanCachePath(): string {
+    // Include a per-installation hash so co-hosted sites sharing a temp dir
+    // never read each other's cache state.
+    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'peachtrees_media_scan_' . md5(__DIR__) . '.json';
+}
+
+/** How long (seconds) the expensive filesystem scan result stays fresh. */
+define('MEDIA_SCAN_TTL', 60);
+
+/**
+ * syncMediaLibrary() with a TTL: uploads and deletes already reconcile their
+ * own rows immediately, so consecutive full scans within the TTL are skipped.
+ */
+function syncMediaLibraryCached(PDO $pdo, int $ttl = MEDIA_SCAN_TTL): void {
+    $cacheFile = mediaScanCachePath();
+    if (is_file($cacheFile)) {
+        $cache = json_decode((string)file_get_contents($cacheFile), true);
+        if (is_array($cache) && (time() - (int)($cache['scanned_at'] ?? 0)) < $ttl) {
+            return;
+        }
+    }
+    syncMediaLibrary($pdo);
+    @file_put_contents($cacheFile, json_encode(['scanned_at' => time()]));
+}
+
 /**
  * 文件系统同步：
  * 1) 补录：扫描 upload 目录，把数据库中没有记录的文件补写进 pt_media；

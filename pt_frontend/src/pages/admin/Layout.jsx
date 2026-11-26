@@ -1,16 +1,35 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { pluginsAPI } from '../../services/api'
+import { authAPI, pluginsAPI } from '../../services/api'
 import { useEffect, useMemo, useState } from 'react'
 import { publicUrl } from '../../utils/path'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
-  const { lang, language } = useLanguage()
+  const { lang, language, setLanguage } = useLanguage()
   const [plugins, setPlugins] = useState([])
+  const [installPhpExists, setInstallPhpExists] = useState(false)
 
   const isAdmin = user?.role === 1
+
+  useEffect(() => {
+    // Security banner: install.php left on the server is a re-install risk
+    authAPI.check().then((res) => {
+      if (res?.data?.installPhpExists) {
+        setInstallPhpExists(true)
+      }
+    }).catch(() => {})
+  }, [])
+
+  const langNames = {
+    'zh-CN': lang('chineseSimplified'),
+    'en-US': lang('english'),
+    'ja-JP': lang('japanese'),
+    'de-DE': lang('german'),
+    'fr-FR': lang('french'),
+    'es-ES': lang('spanish')
+  }
 
   useEffect(() => {
     // Only load plugins list if the user is an administrator
@@ -45,13 +64,30 @@ export default function AdminLayout() {
   }, [plugins, language, isAdmin])
 
   return (
-    <div className="d-flex min-vh-100">
+    <>
+      {isAdmin && installPhpExists && (
+        <div className="alert alert-warning mb-0 rounded-0 text-center">
+          <i className="bi bi-exclamation-triangle-fill me-2"></i>
+          {lang('secBannerInstall')}
+        </div>
+      )}
+      <div className="d-flex min-vh-100">
       {/* Sidebar */}
       <nav className="d-flex flex-column flex-shrink-0 p-3 text-bg-dark" style={{ width: '220px' }}>
         <h5 className="text-center mb-3">
           <i className="bi bi-gear-fill me-2 text-primary"></i>
           {lang('admin')}
         </h5>
+        <select
+          className="form-select form-select-sm bg-dark text-white border-secondary mb-3"
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          title="Language"
+        >
+          {Object.entries(langNames).map(([code, name]) => (
+            <option key={code} value={code}>{name}</option>
+          ))}
+        </select>
         <hr />
         <ul className="nav nav-pills flex-column mb-auto">
           {/* Post List - Accessible to all (Admins and Authors) */}
@@ -232,6 +268,7 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

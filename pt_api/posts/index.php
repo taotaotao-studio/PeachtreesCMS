@@ -18,7 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $page = max(1, intval($_GET['page'] ?? 1));
 $perPage = max(1, min(100, intval($_GET['perPage'] ?? 10)));
 $tag = $_GET['tag'] ?? null;
-$showInactive = isset($_GET['showInactive']) && $_GET['showInactive'] === 'true';
+// Optional list filters (admin UI):
+//   search  — title LIKE keyword
+//   status  — published | draft | scheduled (draft/scheduled require login)
+//   mine    — only the current user's posts (requires login)
+$search = trim((string)($_GET['search'] ?? ''));
+$statusFilter = trim((string)($_GET['status'] ?? ''));
+$mineOnly = isset($_GET['mine']) && $_GET['mine'] === '1';
+// showInactive requires an authenticated user; anonymous visitors always see
+// only published posts. Non-admin authors see only their own inactive posts.
+require_once __DIR__ . '/../auth.php';
+$requestUser = getCurrentUser();
+$showInactive = isset($_GET['showInactive']) && $_GET['showInactive'] === 'true' && $requestUser !== null;
+$mineOnly = $mineOnly && $requestUser !== null;
 $offset = ($page - 1) * $perPage;
 
 try {
@@ -33,9 +45,32 @@ try {
         $params[] = $tag;
     }
 
+    if ($search !== '') {
+        $conditions[] = "p.title LIKE ?";
+        $params[] = '%' . $search . '%';
+    }
+
+    if ($mineOnly) {
+        $conditions[] = "p.user_id = ?";
+        $params[] = $requestUser['id'];
+    }
+
+    if ($statusFilter === 'published') {
+        $conditions[] = "p.active = 1";
+    } elseif ($showInactive && $statusFilter === 'draft') {
+        // Inactive and NOT scheduled: scheduled posts carry a future created_at
+        $conditions[] = "p.active = 0 AND (p.created_at IS NULL OR p.created_at <= NOW())";
+    } elseif ($showInactive && $statusFilter === 'scheduled') {
+        $conditions[] = "p.active = 0 AND p.created_at > NOW()";
+    }
+
     // By default only show published posts
     if (!$showInactive) {
         $conditions[] = "p.active = 1";
+    } elseif ((int)($requestUser['role'] ?? 2) !== 1) {
+        // Non-admin authors can only see their own inactive posts
+        $conditions[] = "(p.active = 1 OR p.user_id = ?)";
+        $params[] = $requestUser['id'];
     }
 
     $whereClause = !empty($conditions) ? "WHERE " . implode(" AND ", $conditions) : "";
@@ -47,7 +82,7 @@ try {
     $total = $countStmt->fetchColumn();
     
     // Get post list
-    $listSql = "SELECT p.id, p.user_id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.content, p.allow_comments, p.active, p.created_at, p.updated_at,
+    $listSql = "SELECT p.id, p.user_id, p.tag, p.post_type, p.title, p.slug, p.summary, p.cover_media, p.allow_comments, p.active, p.created_at, p.updated_at,
                 t.display_name, t.page_style AS tag_page_style
                 FROM pt_posts p
                 LEFT JOIN pt_tags t ON p.tag = t.tag
@@ -84,7 +119,7 @@ try {
         }, $coverMedia);
 
         // Generate excerpt (remove HTML tags, take first 200 characters)
-        $summarySource = trim($post['summary'] ?? '') !== '' ? $post['summary'] : $post['content'];
+        $summarySource = trim($post['summary'] ?? '') !== '' ? $post['summary'] : '';
         $plainText = strip_tags($summarySource);
         $post['excerpt'] = mb_substr($plainText, 0, 200, 'UTF-8');
         if (mb_strlen($plainText, 'UTF-8') > 200) {

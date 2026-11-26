@@ -11,6 +11,10 @@ export default function PostList() {
   const [posts, setPosts] = useState([])
   const [tags, setTags] = useState([])
   const [filterTag, setFilterTag] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [onlyMine, setOnlyMine] = useState(false)
+  const [searchInput, setSearchInput] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState('')
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [batchLoading, setBatchLoading] = useState(false)
@@ -35,7 +39,7 @@ export default function PostList() {
 
   useEffect(() => {
     loadPosts()
-  }, [page, filterTag])
+  }, [page, filterTag, filterStatus, onlyMine, appliedSearch])
 
   const loadTags = async () => {
     try {
@@ -54,6 +58,15 @@ export default function PostList() {
       const params = { page, perPage: 15, showInactive: true }
       if (filterTag) {
         params.tag = filterTag
+      }
+      if (filterStatus) {
+        params.status = filterStatus
+      }
+      if (onlyMine) {
+        params.mine = '1'
+      }
+      if (appliedSearch) {
+        params.search = appliedSearch
       }
       const res = await postsAPI.getList(params)
       if (res.success) {
@@ -106,13 +119,15 @@ export default function PostList() {
     })
   }
 
-  const isAllSelected = posts.length > 0 && posts.every(p => selectedIds.has(p.id))
+  // 全选只覆盖当前用户有权管理的文章，避免把他人文章的 ID 混入批量操作
+  const manageableIds = posts.filter(canManagePost).map(p => p.id)
+  const isAllSelected = manageableIds.length > 0 && manageableIds.every(id => selectedIds.has(id))
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(posts.map(p => p.id)))
+      setSelectedIds(new Set(manageableIds))
     }
   }
 
@@ -164,6 +179,60 @@ export default function PostList() {
               <option key={tag.id} value={tag.tag}>{tag.display_name}</option>
             ))}
           </select>
+        </div>
+
+        <select
+          className="form-select form-select-sm"
+          style={{ width: 'auto' }}
+          value={filterStatus}
+          onChange={e => {
+            setFilterStatus(e.target.value)
+            setPagination(prev => ({ ...prev, page: 1 }))
+          }}
+        >
+          <option value="">{lang('filterAllStatus')}</option>
+          <option value="published">{lang('statusPublished')}</option>
+          <option value="draft">{lang('statusDraft')}</option>
+          <option value="scheduled">{lang('statusScheduled')}</option>
+        </select>
+
+        <div className="input-group input-group-sm" style={{ width: '220px' }}>
+          <input
+            type="search"
+            className="form-control"
+            placeholder={lang('filterSearch')}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                setAppliedSearch(searchInput.trim())
+                setPagination(prev => ({ ...prev, page: 1 }))
+              }
+            }}
+          />
+          <button
+            className="btn btn-outline-secondary"
+            onClick={() => {
+              setAppliedSearch(searchInput.trim())
+              setPagination(prev => ({ ...prev, page: 1 }))
+            }}
+          >
+            <i className="bi bi-search"></i>
+          </button>
+        </div>
+
+        <div className="form-check form-switch mb-0">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="onlyMineSwitch"
+            checked={onlyMine}
+            onChange={e => {
+              setOnlyMine(e.target.checked)
+              setPagination(prev => ({ ...prev, page: 1 }))
+            }}
+          />
+          <label className="form-check-label small" htmlFor="onlyMineSwitch">{lang('filterMine')}</label>
         </div>
 
         {/* Batch actions */}

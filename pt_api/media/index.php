@@ -24,7 +24,9 @@ requireAdmin();
 try {
     $pdo = getDB();
     ensureMediaTable($pdo);
-    syncMediaLibrary($pdo);
+    // TTL-cached filesystem scan: uploads/deletes reconcile their own DB rows
+    // immediately; the full scan only re-runs every MEDIA_SCAN_TTL seconds.
+    syncMediaLibraryCached($pdo, MEDIA_SCAN_TTL);
 
     $stmt = $pdo->query(
         "SELECT id, filename, original_name, path, mime_type, file_size, created_at

@@ -46,10 +46,11 @@ CREATE TABLE IF NOT EXISTS `pt_users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `pt_users` (`id`, `username`, `nickname`, `email`, `password_hash`, `role`, `created_at`, `last_login_at`) VALUES
-	(1, 'admin', '管理员', 'admin@peachtrees.com', '$2y$12$YBnqh4Wjt6sEqYZkaKb7LOqx.k460jVm5aasKSwAQdfSAOSylGPLm', 1, '2026-03-24 17:18:51', '2026-06-11 21:54:48');
+-- No default admin is seeded: the installer creates the administrator with
+-- credentials chosen in the wizard (previously a publicly known preset hash
+-- shipped here — removed for security).
 
 -- Table: pt_media
 CREATE TABLE IF NOT EXISTS `pt_media` (

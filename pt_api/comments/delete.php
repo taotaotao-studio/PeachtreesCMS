@@ -15,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'P
     error('Method not allowed', 405);
 }
 
-// Verify authentication
-requireAuth();
+// Verify admin privileges — only admins can delete comments
+requireAdmin();
 
 // Get request parameters
 $input = getJsonInput();

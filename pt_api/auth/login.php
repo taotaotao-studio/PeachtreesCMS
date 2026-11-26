@@ -7,11 +7,20 @@
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../response.php';
+require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../password.php';
+require_once __DIR__ . '/../security.php';
 
 // Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     error('Method not allowed', 405);
+}
+
+// Brute-force protection: max 10 failed logins per IP per 10 minutes.
+// Only FAILURES are recorded — a successful login never consumes the budget.
+$rateKey = 'login:' . ptClientIp();
+if (!ptRateLimitCheck($rateKey, 10, 600)) {
+    error('Too many failed login attempts. Please try again later.', 429);
 }
 
 // Get request parameters
@@ -33,12 +42,14 @@ try {
     $user = $stmt->fetch();
     
     if (!$user) {
-        error('User does not exist');
+        ptRateLimitRecord($rateKey, 600);
+        error('Invalid username or password');
     }
 
     // Verify password
     if (!verifyPassword($password, $user['password_hash'])) {
-        error('Incorrect password');
+        ptRateLimitRecord($rateKey, 600);
+        error('Invalid username or password');
     }
 
     // Regenerate session ID to prevent session fixation attack

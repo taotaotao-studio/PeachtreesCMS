@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST
     error('Method not allowed', 405);
 }
 
-requireAuth();
+requireAdmin();
 
 $input = getJsonInput();
 $ids = $input['ids'] ?? [];

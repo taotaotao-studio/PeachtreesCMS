@@ -1,0 +1,58 @@
+# PeachtreesCMS — Continuous Integration
+#
+# Lightweight checks that catch regressions early:
+#   1. php -l across the whole backend
+#   2. frontend production build (vite)
+#   3. Docker image build + required PHP extension presence
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: PHP syntax check (php -l, every backend file)
+        run: find pt_api -name '*.php' -print0 | xargs -0 -n1 php -l
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Build frontend (vite production build)
+        run: |
+          pnpm --dir pt_frontend install
+          pnpm --dir pt_frontend build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -f docker/Dockerfile -t peachtrees-ci .
+
+      - name: Verify required PHP extensions inside the image
+        run: |
+          docker run --rm peachtrees-ci php -m | tee /tmp/mods.txt
+          grep -qx 'pdo_mysql' /tmp/mods.txt
+          grep -qx 'gd' /tmp/mods.txt
+          grep -qx 'zip' /tmp/mods.txt

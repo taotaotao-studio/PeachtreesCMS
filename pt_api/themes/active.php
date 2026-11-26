@@ -15,7 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     $pdo = getDB();
-    scanThemePackages($pdo);
+    // NOTE: no scanThemePackages() here — this endpoint runs on EVERY frontend
+    // page load; scanning content/themes/* and writing to pt_themes on each
+    // visit was pure waste. The scan runs from the admin theme list
+    // (themes/index.php) instead, so new packages are picked up when an admin
+    // opens the theme management page.
 
     $stmt = $pdo->query("SELECT id, slug, description, version, author, entry_css FROM pt_themes WHERE is_active = 1 LIMIT 1");
     $theme = $stmt ? $stmt->fetch() : null;

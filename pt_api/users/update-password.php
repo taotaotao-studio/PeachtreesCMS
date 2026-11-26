@@ -34,8 +34,8 @@ if (empty($newPassword)) {
     error('Please enter new password');
 }
 
-if (strlen($newPassword) < 6) {
-    error('Password must be at least 6 characters');
+if (strlen($newPassword) < 8) {
+    error('Password must be at least 8 characters');
 }
 
 if ($newPassword !== $confirmPassword) {
@@ -44,12 +44,12 @@ if ($newPassword !== $confirmPassword) {
 
 try {
     $pdo = getDB();
-    
+
     // Get current user's password
     $stmt = $pdo->prepare("SELECT password_hash FROM pt_users WHERE id = ?");
     $stmt->execute([$user['id']]);
     $currentUser = $stmt->fetch();
-    
+
     if (!$currentUser) {
         error('User not found');
     }
@@ -65,9 +65,15 @@ try {
     // Update password
     $updateStmt = $pdo->prepare("UPDATE pt_users SET password_hash = ? WHERE id = ?");
     $updateStmt->execute([$hashedPassword, $user['id']]);
-    
+
+    // Rotate the current session id after a credential change so a stolen
+    // session id from before the change is invalidated.
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_regenerate_id(true);
+    }
+
     success(null, 'Password changed successfully');
-    
+
 } catch (PDOException $e) {
     error_log('[peachtrees] Failed to change password: ' . $e->getMessage());
     serverError('Failed to change password');

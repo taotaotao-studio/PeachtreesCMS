@@ -247,6 +247,12 @@ try {
             $email = trim((string) $comment->comment_author_email);
             $nickname = trim((string) $comment->comment_author) ?: 'Anonymous';
             $website = trim((string) $comment->comment_author_url);
+            // Normalize imported website URLs: only http(s) is allowed, anything
+            // else (javascript:, data:, bare domains, garbage) is dropped — same
+            // rule as comments/create.php
+            if ($website !== '' && !preg_match('#^https?://#i', $website)) {
+                $website = '';
+            }
             $ip = trim((string) $comment->comment_author_IP);
             $commentDate = trim((string) $comment->comment_date) ?: date('Y-m-d H:i:s');
             $commentContent = (string) $comment->comment_content;

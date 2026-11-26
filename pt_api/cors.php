@@ -18,13 +18,16 @@ if ($envOrigins) {
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
+// Caching proxies must not serve one origin's CORS headers to another.
+header('Vary: Origin');
+
 if (in_array($origin, $allowedOrigins, strict: true)) {
     header("Access-Control-Allow-Origin: $origin");
-} else {
-    // Production: deny access for unknown origins
-    // Do NOT use wildcard (*) in production
-    header("Access-Control-Allow-Origin: " . ($_SERVER['HTTP_HOST'] === 'localhost' ? '*' : ''));
+} elseif ($origin !== '' && preg_match('#^https?://localhost(:\d+)?$#', $origin)) {
+    // Development: reflect the actual localhost origin so credentials work
+    header("Access-Control-Allow-Origin: $origin");
 }
+// Unknown origins: no ACAO header at all → browser blocks the request
 
 // Allowed HTTP methods
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");

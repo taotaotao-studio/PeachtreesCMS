@@ -22,11 +22,6 @@ requireAdmin();
 $input = getJsonInput();
 $id = intval($input['id'] ?? 0);
 
-// Also support GET parameter
-if ($id <= 0) {
-    $id = intval($_GET['id'] ?? 0);
-}
-
 if ($id <= 0) {
     error('Invalid tag ID');
 }

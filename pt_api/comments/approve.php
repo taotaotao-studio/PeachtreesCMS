@@ -15,8 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST
     error('Method not allowed', 405);
 }
 
-// Verify authentication
-requireAuth();
+// Verify admin privileges — only admins can moderate comments
+requireAdmin();
 
 // Get request parameters
 $input = getJsonInput();

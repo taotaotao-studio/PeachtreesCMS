@@ -17,14 +17,19 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Generate four-digit numeric captcha
+// Generate a 5-character captcha from a confusable-free alphanumeric charset
+// (no 0/O/1/l/I). Cryptographically secure selection; consumers compare case-
+// insensitively, so mixed case widens the space cheaply.
+$chars = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+$length = 5;
 $code = '';
-for ($i = 0; $i < 4; $i++) {
-    $code .= mt_rand(0, 9);
+for ($i = 0; $i < $length; $i++) {
+    $code .= $chars[random_int(0, strlen($chars) - 1)];
 }
 
-// Save to session
+// Save to session with timestamp for expiry check
 $_SESSION['captcha'] = $code;
+$_SESSION['captcha_time'] = time();
 
 // Image dimensions
 $width = 120;
@@ -54,9 +59,9 @@ $fontSize = 5;
 $fontWidth = imagefontwidth($fontSize);
 
 // Calculate position for each character
-$charWidth = $width / 4;
+$charWidth = $width / $length;
 
-for ($i = 0; $i < 4; $i++) {
+for ($i = 0; $i < $length; $i++) {
     // Random color
     $textColor = imagecolorallocate($image, mt_rand(50, 120), mt_rand(50, 120), mt_rand(50, 120));
     

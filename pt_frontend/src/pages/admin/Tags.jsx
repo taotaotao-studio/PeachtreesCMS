@@ -135,7 +135,7 @@ export default function Tags() {
                   >
                     <option value="">{lang('tagPageStyleDefault')}</option>
                     {patterns.map(pattern => (
-                      <option key={pattern.id} value={pattern.id}>
+                      <option key={pattern.id} value={pattern.name}>
                         {pattern.name}
                       </option>
                     ))}
@@ -217,14 +217,14 @@ export default function Tags() {
                         >
                           <option value="">{lang('tagPageStyleDefault')}</option>
                           {patterns.map(pattern => (
-                            <option key={pattern.id} value={pattern.id}>
+                            <option key={pattern.id} value={pattern.name}>
                               {pattern.name}
                             </option>
                           ))}
                         </select>
                       ) : (
                         <span className="text-muted small">
-                          {patterns.find(p => p.id === tag.page_style)?.name || tag.page_style || '-'}
+                          {patterns.find(p => p.name === tag.page_style)?.name || tag.page_style || '-'}
                         </span>
                       )}
                     </td>

@@ -20,7 +20,9 @@ function stylePublicCssUrl(string $slug, string $entryCss = 'style.css'): string
  * Get the cache file path for style scan metadata.
  */
 function styleScanCachePath(): string {
-    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'peachtrees_style_scan.json';
+    // Include a site-specific hash to avoid cache collisions between instances
+    $hash = substr(md5(__DIR__), 0, 8);
+    return sys_get_temp_dir() . DIRECTORY_SEPARATOR . "peachtrees_style_scan_{$hash}.json";
 }
 
 /**

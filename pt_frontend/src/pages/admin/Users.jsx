@@ -30,7 +30,7 @@ export default function Users() {
     password: ''
   })
 
-  const isAdmin = currentUser?.id === 1
+  const isAdmin = currentUser?.role === 1
 
   useEffect(() => {
     loadUsers()

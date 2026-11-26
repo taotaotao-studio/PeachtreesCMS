@@ -1,6 +1,12 @@
 /**
  * 安全 HTML 消毒函数（前端唯一消毒入口）
  * 仅保留白名单标签/属性，并对 href/src 做协议过滤，防止 XSS。
+ *
+ * 实现说明：
+ * - 使用 DOMParser 解析（与挂到文档树的 innerHTML 不同，它不会执行脚本、
+ *   不会预加载 img/video 资源）；
+ * - URL 协议判断前先剥离控制字符与空白：浏览器会把 "\x01javascript:..."
+ *   规范化后执行，直接前缀匹配会被绕过。
  */
 
 // TipTap 富文本编辑器可能输出的标签
@@ -36,11 +42,12 @@ const SAFE_URL_PREFIXES = ['http://', 'https://', '//', '/', './', '../', '#', '
 
 function isSafeUrl(value) {
   if (typeof value !== 'string') return false
-  const trimmed = value.trim()
-  if (!trimmed) return true
-  const lower = trimmed.toLowerCase()
+  // 剥离控制字符与空白（含换行），防止 "java\nscript:" / "\x01javascript:" 绕过
+  const cleaned = value.replace(/[\x00-\x20\x7F]/g, '')
+  if (!cleaned) return true
+  const lower = cleaned.toLowerCase()
   // 显式拒绝危险协议
-  if (/^(javascript|vbscript|data):/i.test(lower)) return false
+  if (/^(javascript|vbscript|data):/.test(lower)) return false
   return SAFE_URL_PREFIXES.some((prefix) => lower.startsWith(prefix))
 }
 
@@ -54,9 +61,7 @@ export function sanitizeHtml(html) {
     return ''
   }
 
-  // 创建一个临时 DOM 元素来解析 HTML
-  const div = document.createElement('div')
-  div.innerHTML = html
+  const doc = new DOMParser().parseFromString(html, 'text/html')
 
   function cleanElement(element) {
     if (element.nodeType === Node.ELEMENT_NODE) {
@@ -105,8 +110,8 @@ export function sanitizeHtml(html) {
     children.forEach((child) => cleanElement(child))
   }
 
-  // 从 body 开始清理（div.innerHTML 会自动包裹进 body）
-  Array.from(div.childNodes).forEach((child) => cleanElement(child))
+  // 从 body 开始清理
+  Array.from(doc.body.childNodes).forEach((child) => cleanElement(child))
 
-  return div.innerHTML
+  return doc.body.innerHTML
 }

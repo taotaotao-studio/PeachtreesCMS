@@ -25,9 +25,14 @@ RUN pnpm build
 # ---------------------------------------------------------------- stage 2: runtime
 FROM php:8.2-apache
 
-# pdo_mysql is required by the CMS; rewrite is required by .htaccess rules
-RUN docker-php-ext-install pdo_mysql \
-    && a2enmod rewrite
+# pdo_mysql is required by the CMS; gd renders the comment captcha; zip
+# (ZipArchive) powers the online updater; rewrite is required by .htaccess rules
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpng-dev libjpeg-dev libfreetype6-dev libzip-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) pdo_mysql gd zip \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
 # Frontend build output (index.html, admin.html, assets/, languages/, imgs/,
 # content/themes, content/patterns, ...)

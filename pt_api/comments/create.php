@@ -20,6 +20,11 @@ $email = trim($input['email'] ?? '');
 $nickname = trim($input['nickname'] ?? '');
 $content = trim($input['content'] ?? '');
 $website = trim($input['website'] ?? '');
+
+// Validate website URL protocol to prevent javascript: XSS
+if ($website !== '' && !preg_match('#^https?://#i', $website)) {
+    error('Website URL must start with http:// or https://');
+}
 $parentId = intval($input['parent_id'] ?? 0);
 $captcha = trim($input['captcha'] ?? '');
 
@@ -52,10 +57,18 @@ if (strlen($content) > 1000) {
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['captcha']) || strtoupper($captcha) !== strtoupper($_SESSION['captcha'])) {
+// Always clear captcha after verification attempt to prevent replay
+$storedCaptcha = $_SESSION['captcha'] ?? null;
+$captchaTime   = $_SESSION['captcha_time'] ?? 0;
+unset($_SESSION['captcha'], $_SESSION['captcha_time']);
+
+if ($storedCaptcha === null || strtoupper($captcha) !== strtoupper($storedCaptcha)) {
     error('Invalid captcha');
 }
-unset($_SESSION['captcha']); // Delete captcha after verification
+// Reject captchas older than 5 minutes
+if (time() - $captchaTime > 300) {
+    error('Captcha expired, please refresh');
+}
 
 try {
     $pdo = getDB();

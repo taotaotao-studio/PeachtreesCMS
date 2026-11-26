@@ -71,9 +71,9 @@
 
 ### 2. 运行安装程序
 在浏览器中访问：`http://your-domain.com/your-path/pt_api/install.php`
-* **环境检测**：安装器会自动对 PHP 版本、PDO 扩展、Fileinfo 扩展，以及 `pt_api/`、`upload/`、`theme/`、`pattern/` 文件夹的可写权限进行绿灯检测。
+* **环境检测**：安装器会自动对 PHP 版本、PDO 扩展、Fileinfo/GD 扩展，以及 `pt_api/`、`content/uploads/`、`content/themes/`、`content/patterns/` 的可写权限进行绿灯检测（`zip`/`curl` 为可选的在线更新支持，不阻塞安装）。
 * **安全配置**：安装程序在写入配置时，会自动生成安全的数据库配置与环境文件。
-* **完成清理**：安装成功后，请根据页面提示，**删除 `pt_api/install.php`** 以及 **根目录下的 `data-init.sql`** 文件，以确保生产环境安全。
+* **完成清理**：安装成功后，请根据页面提示，**删除 `pt_api/install.php`** 以及 **`pt_api/data-init.sql`** 文件，以确保生产环境安全。
 
 ### 3. Nginx 敏感文件防护
 如果您使用的是 Nginx 服务器，请在您的 Nginx `server {}` 块中加入以下**两条**黄金规则。只加第一条是不够的：
