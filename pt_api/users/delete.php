@@ -26,21 +26,33 @@ if ($id <= 0) {
     error('Invalid user ID');
 }
 
-// Cannot delete admin (uid = 1)
-if ($id === 1) {
-    error('Cannot delete admin account');
+// Current operator (requireAdmin above guarantees a logged-in admin)
+$currentUser = getCurrentUser();
+$currentUid = (int)($currentUser['id'] ?? 0);
+
+// Safety: an admin cannot delete their own account
+if ($id === $currentUid) {
+    error('Cannot delete your own account');
 }
 
 try {
     $pdo = getDB();
     
     // Check if user exists
-    $checkStmt = $pdo->prepare("SELECT id, username FROM pt_users WHERE id = ?");
+    $checkStmt = $pdo->prepare("SELECT id, username, role FROM pt_users WHERE id = ?");
     $checkStmt->execute([$id]);
     $user = $checkStmt->fetch();
     
     if (!$user) {
         notFound('User not found');
+    }
+
+    // Safety: never delete the last remaining administrator
+    if ((int)$user['role'] === 1) {
+        $adminCount = (int)$pdo->query("SELECT COUNT(*) FROM pt_users WHERE role = 1")->fetchColumn();
+        if ($adminCount <= 1) {
+            error('Cannot delete the last administrator account');
+        }
     }
 
     // Delete user and handle their posts inside a transaction

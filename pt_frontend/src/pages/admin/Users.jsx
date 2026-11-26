@@ -31,6 +31,8 @@ export default function Users() {
   })
 
   const isAdmin = currentUser?.role === 1
+  // Number of administrators, used to protect the last remaining admin account
+  const adminCount = users.filter(u => parseInt(u.role) === 1).length
 
   useEffect(() => {
     loadUsers()
@@ -420,7 +422,7 @@ export default function Users() {
                         <td className="align-middle">
                           <span className="fw-medium">
                             {user.username}
-                            {user.id === 1 && (
+                            {parseInt(user.role) === 1 && (
                               <span className="badge bg-warning text-dark ms-2">Admin</span>
                             )}
                           </span>
@@ -445,7 +447,7 @@ export default function Users() {
                           <small>{user.last_login_at}</small>
                         </td>
                         <td className="text-center align-middle">
-                          {user.id !== 1 && (
+                          {user.id !== currentUser?.id && (
                             <div className="btn-group gap-1">
                               <button 
                                 className="btn btn-sm btn-outline-primary"
@@ -454,13 +456,15 @@ export default function Users() {
                               >
                                 <i className="bi bi-pencil"></i>
                               </button>
-                              <button 
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleDeleteUser(user.id)}
-                                title={lang('delete')}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
+                              {!(parseInt(user.role) === 1 && adminCount <= 1) && (
+                                <button 
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  title={lang('delete')}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
