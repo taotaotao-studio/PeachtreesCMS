@@ -137,6 +137,9 @@ function fetchLatestRelease(): array {
     }
     $release = json_decode($body, true);
     if (!is_array($release) || empty($release['tag_name'])) {
+        if (is_array($release) && ($release['message'] ?? '') === 'Not Found') {
+            throw new RuntimeException('The repository has no releases yet. Publish the first GitHub Release (v* tag) to enable updates.');
+        }
         throw new RuntimeException('Update source returned an unexpected response.');
     }
     $zipUrl = null;

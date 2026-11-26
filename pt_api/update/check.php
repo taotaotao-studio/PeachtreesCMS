@@ -34,8 +34,10 @@ function normalizeVersion(string $version): string {
     return ltrim(trim($version), "vV \t\n\r\0\x0B");
 }
 
-/** HTTP GET (curl preferred, stream-context fallback). Returns body or null. */
+/** HTTP GET (curl preferred, stream-context fallback). Returns body or null.
+ *  Records the last HTTP status in $GLOBALS['pt_update_last_status']. */
 function updateHttpGet(string $url, array $headers = []): ?string {
+    $GLOBALS['pt_update_last_status'] = 0;
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -49,6 +51,7 @@ function updateHttpGet(string $url, array $headers = []): ?string {
         $body = curl_exec($ch);
         $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
+        $GLOBALS['pt_update_last_status'] = $status;
         return ($body !== false && $status >= 200 && $status < 300) ? $body : null;
     }
 
@@ -59,9 +62,16 @@ function updateHttpGet(string $url, array $headers = []): ?string {
             'timeout' => PT_UPDATE_TIMEOUT,
             'follow_location' => 1,
             'max_redirects' => 5,
+            'ignore_errors' => true,
         ],
     ]);
     $body = @file_get_contents($url, false, $context);
+    $GLOBALS['pt_update_last_status'] = 0;
+    foreach ($http_response_header ?? [] as $h) {
+        if (preg_match('#^HTTP/\S+\s+(\d{3})#', $h, $m)) {
+            $GLOBALS['pt_update_last_status'] = (int)$m[1];
+        }
+    }
     return $body === false ? null : $body;
 }
 
@@ -91,6 +101,9 @@ try {
             'User-Agent: PeachtreesCMS-Updater/' . normalizeVersion(PT_VERSION),
         ]
     );
+    if ($GLOBALS['pt_update_last_status'] === 404) {
+        serverError('The repository has no releases yet. Publish the first GitHub Release (v* tag) to enable the updater.');
+    }
     if ($body === null) {
         serverError("Could not reach the update source. Check the server's outbound network.");
     }
